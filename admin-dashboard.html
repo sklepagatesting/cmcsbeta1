@@ -1,248 +1,247 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8" />
-<title>SVLS | Admin Control Center</title>
-<script src="https://cdn.tailwindcss.com"></script>
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+  <meta charset="UTF-8" />
+  <title>SVLS Admin Dashboard</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+  <!-- Tailwind -->
+  <script src="https://cdn.tailwindcss.com"></script>
+
+  <!-- Firebase -->
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js";
+    import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-auth.js";
+    import {
+      getFirestore,
+      collection,
+      doc,
+      getDocs,
+      getDoc,
+      setDoc,
+      deleteDoc
+    } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js";
+
+    /* ======================
+       FIREBASE CONFIG
+    ====================== */
+    const firebaseConfig = {
+      apiKey: "YOUR_API_KEY",
+      authDomain: "YOUR_DOMAIN",
+      projectId: "YOUR_PROJECT_ID",
+      storageBucket: "YOUR_BUCKET",
+      messagingSenderId: "YOUR_SENDER_ID",
+      appId: "YOUR_APP_ID"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+    const db = getFirestore(app);
+
+    /* ======================
+       STATE
+    ====================== */
+    let selectedClassId = null;
+
+    /* ======================
+       DOM
+    ====================== */
+    const pendingList = document.getElementById("pendingList");
+    const teacherList = document.getElementById("teacherList");
+    const classList = document.getElementById("classList");
+    const assignedStudents = document.getElementById("assignedStudents");
+    const availableStudents = document.getElementById("availableStudents");
+
+    /* ======================
+       AUTH GUARD
+    ====================== */
+    onAuthStateChanged(auth, async (user) => {
+      if (!user) {
+        alert("Not logged in");
+        location.href = "login.html";
+      }
+    });
+
+    /* ======================
+       LOAD PENDING STUDENTS
+    ====================== */
+    async function loadPendingStudents() {
+      pendingList.innerHTML = "";
+      const snap = await getDocs(collection(db, "users"));
+
+      snap.forEach(d => {
+        const u = d.data();
+        if (u.role === "student" && !u.approved) {
+          const div = document.createElement("div");
+          div.className = "flex justify-between items-center border p-2 rounded";
+          div.innerHTML = `
+            <div>
+              <div class="font-semibold">${u.email}</div>
+              <div class="text-xs text-gray-500">Pending approval</div>
+            </div>
+            <button class="bg-green-600 text-white px-3 py-1 rounded text-sm">
+              Approve
+            </button>
+          `;
+          div.querySelector("button").onclick = async () => {
+            await setDoc(doc(db, "users", d.id), { approved: true }, { merge: true });
+            loadPendingStudents();
+            loadAvailableStudents();
+          };
+          pendingList.appendChild(div);
+        }
+      });
+    }
+
+    /* ======================
+       LOAD TEACHERS + LOAD
+    ====================== */
+    async function loadTeachers() {
+      teacherList.innerHTML = "";
+      const teachersSnap = await getDocs(collection(db, "teachers"));
+      const classesSnap = await getDocs(collection(db, "classes"));
+
+      teachersSnap.forEach(t => {
+        let classCount = 0;
+        classesSnap.forEach(c => {
+          if (c.data().teacherId === t.id) classCount++;
+        });
+
+        const div = document.createElement("div");
+        div.className = "border p-3 rounded";
+        div.innerHTML = `
+          <div class="font-semibold">${t.data().name}</div>
+          <div class="text-sm text-gray-600">
+            Classes: ${classCount}
+          </div>
+        `;
+        teacherList.appendChild(div);
+      });
+    }
+
+    /* ======================
+       LOAD CLASSES
+    ====================== */
+    async function loadClasses() {
+      classList.innerHTML = "";
+      const snap = await getDocs(collection(db, "classes"));
+
+      snap.forEach(c => {
+        const div = document.createElement("div");
+        div.className =
+          "border p-3 rounded cursor-pointer hover:bg-blue-50";
+        div.innerHTML = `
+          <div class="font-semibold">${c.data().subject}</div>
+          <div class="text-sm text-gray-500">
+            ${c.data().teacherName} · ${c.data().semester}
+          </div>
+        `;
+        div.onclick = () => selectClass(c.id);
+        classList.appendChild(div);
+      });
+    }
+
+    /* ======================
+       SELECT CLASS
+    ====================== */
+    async function selectClass(classId) {
+      selectedClassId = classId;
+      assignedStudents.innerHTML = "";
+      availableStudents.innerHTML = "";
+
+      const assignedSnap = await getDocs(
+        collection(db, "classes", classId, "students")
+      );
+
+      const assignedIds = [];
+
+      assignedSnap.forEach(s => {
+        assignedIds.push(s.id);
+        const div = document.createElement("div");
+        div.className = "flex justify-between items-center border p-2 rounded";
+        div.innerHTML = `
+          <span>${s.id}</span>
+          <button class="text-red-600 text-sm">Remove</button>
+        `;
+        div.querySelector("button").onclick = async () => {
+          await deleteDoc(doc(db, "classes", classId, "students", s.id));
+          selectClass(classId);
+        };
+        assignedStudents.appendChild(div);
+      });
+
+      const usersSnap = await getDocs(collection(db, "users"));
+      usersSnap.forEach(u => {
+        if (u.data().approved && u.data().role === "student" && !assignedIds.includes(u.id)) {
+          const div = document.createElement("div");
+          div.className = "flex justify-between items-center border p-2 rounded";
+          div.innerHTML = `
+            <span>${u.data().email}</span>
+            <button class="text-green-600 text-sm">Add</button>
+          `;
+          div.querySelector("button").onclick = async () => {
+            await setDoc(doc(db, "classes", classId, "students", u.id), {
+              assignedAt: Date.now()
+            });
+            selectClass(classId);
+          };
+          availableStudents.appendChild(div);
+        }
+      });
+    }
+
+    /* ======================
+       INIT
+    ====================== */
+    loadPendingStudents();
+    loadTeachers();
+    loadClasses();
+  </script>
 </head>
 
-<body class="bg-slate-100 min-h-screen flex font-sans text-slate-900">
+<body class="bg-gray-100 min-h-screen">
 
-<!-- SIDEBAR -->
-<aside class="w-72 bg-blue-950 text-white flex flex-col shadow-xl">
-  <div class="p-8 border-b border-blue-900">
-    <h1 class="text-2xl font-black italic">SVLS <span class="text-blue-400">ADMIN</span></h1>
-    <p id="adminEmail" class="text-xs text-blue-400 mt-2 truncate"></p>
-  </div>
+  <!-- HEADER -->
+  <header class="bg-white border-b px-6 py-4">
+    <h1 class="text-2xl font-bold">SVLS Admin Dashboard</h1>
+  </header>
 
-  <nav class="flex-1 py-6 space-y-2">
-    <button onclick="showTab('dashboard')" class="nav-btn">Dashboard</button>
-    <button onclick="showTab('approvals')" class="nav-btn">Approvals</button>
-    <button onclick="showTab('classes')" class="nav-btn">Classes & Rosters</button>
-    <button onclick="showTab('teachers')" class="nav-btn">Teacher Load</button>
-  </nav>
+  <!-- CONTENT -->
+  <main class="p-6 grid grid-cols-12 gap-6">
 
-  <div class="p-6 border-t border-blue-900">
-    <button id="logoutBtn" class="w-full bg-rose-600 py-3 rounded-xl font-black text-xs uppercase">
-      Sign Out
-    </button>
-  </div>
-</aside>
+    <!-- LEFT -->
+    <section class="col-span-3 space-y-6">
+      <div class="bg-white p-4 rounded shadow">
+        <h2 class="font-semibold mb-3">Pending Students</h2>
+        <div id="pendingList" class="space-y-2"></div>
+      </div>
 
-<!-- MAIN -->
-<main class="flex-1 overflow-y-auto">
-<header class="bg-white border-b p-6 sticky top-0 z-40">
-  <h2 id="tabTitle" class="font-black uppercase tracking-widest text-slate-500 text-xs">
-    Dashboard
-  </h2>
-</header>
+      <div class="bg-white p-4 rounded shadow">
+        <h2 class="font-semibold mb-3">Teachers</h2>
+        <div id="teacherList" class="space-y-2"></div>
+      </div>
+    </section>
 
-<div class="p-10 space-y-12 max-w-7xl mx-auto">
+    <!-- CENTER -->
+    <section class="col-span-4 bg-white p-4 rounded shadow">
+      <h2 class="font-semibold mb-3">Classes</h2>
+      <div id="classList" class="space-y-2"></div>
+    </section>
 
-<!-- DASHBOARD -->
-<section id="dashboard" class="tab">
-  <div class="grid grid-cols-1 md:grid-cols-4 gap-6">
-    <div class="stat-card">Students <span id="statStudents"></span></div>
-    <div class="stat-card">Teachers <span id="statTeachers"></span></div>
-    <div class="stat-card">Classes <span id="statClasses"></span></div>
-    <div class="stat-card">Pending <span id="statPending"></span></div>
-  </div>
-</section>
+    <!-- RIGHT -->
+    <section class="col-span-5 grid grid-cols-2 gap-4">
+      <div class="bg-white p-4 rounded shadow">
+        <h2 class="font-semibold mb-3">Available Students</h2>
+        <div id="availableStudents" class="space-y-2"></div>
+      </div>
 
-<!-- APPROVALS -->
-<section id="approvals" class="tab hidden">
-  <div class="bg-white rounded-2xl shadow border overflow-hidden">
-    <table class="w-full">
-      <thead class="bg-slate-50 text-xs uppercase font-black text-slate-400">
-        <tr><th class="p-4">Student</th><th class="p-4 text-right">Action</th></tr>
-      </thead>
-      <tbody id="pendingTable"></tbody>
-    </table>
-  </div>
-</section>
+      <div class="bg-white p-4 rounded shadow">
+        <h2 class="font-semibold mb-3">Assigned Students</h2>
+        <div id="assignedStudents" class="space-y-2"></div>
+      </div>
+    </section>
 
-<!-- CLASSES + ROSTERS -->
-<section id="classes" class="tab hidden">
-<div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+  </main>
 
-<!-- CLASS LIST -->
-<div class="bg-white rounded-2xl shadow border p-6">
-  <h3 class="font-black text-sm uppercase mb-4">Classes</h3>
-  <div id="classList" class="space-y-2"></div>
-</div>
-
-<!-- ROSTER -->
-<div class="lg:col-span-2 bg-white rounded-2xl shadow border p-6">
-  <h3 id="classTitle" class="font-black text-sm uppercase mb-4 text-slate-400">
-    Select a class
-  </h3>
-
-  <div class="grid grid-cols-2 gap-6">
-    <div>
-      <h4 class="font-black text-xs mb-2">Unassigned Students</h4>
-      <div id="unassignedStudents" class="space-y-2"></div>
-    </div>
-
-    <div>
-      <h4 class="font-black text-xs mb-2">Assigned Students</h4>
-      <div id="assignedStudents" class="space-y-2"></div>
-    </div>
-  </div>
-</div>
-
-</div>
-</section>
-
-<!-- TEACHER LOAD -->
-<section id="teachers" class="tab hidden">
-  <div class="bg-white rounded-2xl shadow border overflow-hidden">
-    <table class="w-full text-sm">
-      <thead class="bg-slate-50 uppercase text-xs font-black text-slate-400">
-        <tr>
-          <th class="p-4">Teacher</th>
-          <th class="p-4">Classes</th>
-          <th class="p-4">Students</th>
-          <th class="p-4">Load</th>
-        </tr>
-      </thead>
-      <tbody id="teacherLoadTable"></tbody>
-    </table>
-  </div>
-</section>
-
-</div>
-</main>
-
-<style>
-.nav-btn { width:100%; text-align:left; padding:1rem 2rem; font-weight:800; text-transform:uppercase; font-size:11px; }
-.nav-btn:hover { background:#1e40af; }
-.tab { animation: fade .3s ease; }
-.stat-card { background:white; border-radius:1.5rem; padding:2rem; font-weight:900; }
-@keyframes fade { from{opacity:0} to{opacity:1} }
-</style>
-
-<script type="module">
-import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-import {
- getAuth,onAuthStateChanged,signOut
-} from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
-import {
- getFirestore,collection,getDocs,query,where,
- doc,updateDoc,setDoc,deleteDoc,getDoc
-} from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
-
-const firebaseConfig = {
-  apiKey: "AIzaSyBK-v8xtt7x0AA_btC0oE88IolgU9m5Q3E",
-  authDomain: "cmcsvls.firebaseapp.com",
-  projectId: "cmcsvls",
-  storageBucket: "cmcsvls.firebasestorage.app",
-  messagingSenderId: "973791112453",
-  appId: "1:973791112453:web:728b9ac51c0f3f89955b6c",
-  measurementId: "G-7KEY33ZZHE"
-};
-
-const auth = getAuth(app);
-const db = getFirestore(app);
-
-window.showTab = (id)=>{
- document.querySelectorAll('.tab').forEach(t=>t.classList.add('hidden'));
- document.getElementById(id).classList.remove('hidden');
- document.getElementById('tabTitle').innerText = id;
-};
-
-onAuthStateChanged(auth,u=>{
- if(!u) location.href="login.html";
- else document.getElementById('adminEmail').innerText=u.email;
- loadStats(); loadPending(); loadClasses(); loadTeacherLoad();
-});
-
-async function loadStats(){
- const students = await getDocs(query(collection(db,"users"),where("role","==","student")));
- const pending = await getDocs(query(collection(db,"users"),where("active","==",false)));
- document.getElementById('statStudents').innerText=students.size;
- document.getElementById('statPending').innerText=pending.size;
- document.getElementById('statTeachers').innerText=(await getDocs(collection(db,"teachers"))).size;
- document.getElementById('statClasses').innerText=(await getDocs(collection(db,"classes"))).size;
-}
-
-async function loadPending(){
- const tb=document.getElementById('pendingTable'); tb.innerHTML="";
- const snap=await getDocs(query(collection(db,"users"),where("active","==",false)));
- snap.forEach(d=>{
-  tb.innerHTML+=`
-  <tr>
-   <td class="p-4 font-bold">${d.data().email}</td>
-   <td class="p-4 text-right">
-    <button onclick="approve('${d.id}')" class="bg-blue-600 text-white px-4 py-2 rounded-xl text-xs font-black">Approve</button>
-   </td>
-  </tr>`;
- });
-}
-window.approve=id=>updateDoc(doc(db,"users",id),{active:true}).then(loadPending);
-
-let activeClass=null;
-
-async function loadClasses(){
- const box=document.getElementById('classList'); box.innerHTML="";
- const snap=await getDocs(collection(db,"classes"));
- snap.forEach(d=>{
-  box.innerHTML+=`
-  <button class="w-full text-left p-3 bg-slate-50 rounded-xl font-bold"
-   onclick="selectClass('${d.id}')">${d.id}</button>`;
- });
-}
-
-window.selectClass=async id=>{
- activeClass=id;
- document.getElementById('classTitle').innerText="Class: "+id;
- loadRoster();
-};
-
-async function loadRoster(){
- const assignedBox=document.getElementById('assignedStudents');
- const freeBox=document.getElementById('unassignedStudents');
- assignedBox.innerHTML=freeBox.innerHTML="";
-
- const students=await getDocs(query(collection(db,"users"),where("role","==","student"),where("active","==",true)));
- const assignedSnap=await getDocs(collection(db,"classes",activeClass,"students"));
- const assignedIds=assignedSnap.docs.map(d=>d.id);
-
- students.forEach(s=>{
-  const btn=`<button class="w-full px-3 py-2 rounded-xl text-xs font-bold">`;
-  if(assignedIds.includes(s.id)){
-   assignedBox.innerHTML+=`
-   ${btn}<span>${s.data().email}</span>
-   <button onclick="removeStudent('${s.id}')">Remove</button></button>`;
-  } else {
-   freeBox.innerHTML+=`
-   ${btn}<span>${s.data().email}</span>
-   <button onclick="addStudent('${s.id}')">Add</button></button>`;
-  }
- });
-}
-
-window.addStudent=id=>setDoc(doc(db,"classes",activeClass,"students",id),{assigned:true}).then(loadRoster);
-window.removeStudent=id=>deleteDoc(doc(db,"classes",activeClass,"students",id)).then(loadRoster);
-
-async function loadTeacherLoad(){
- const table=document.getElementById('teacherLoadTable'); table.innerHTML="";
- const teachers=await getDocs(collection(db,"teachers"));
- const classes=await getDocs(collection(db,"classes"));
-
- teachers.forEach(t=>{
-  const own=classes.docs.filter(c=>c.data().teacherId===t.id);
-  table.innerHTML+=`
-  <tr>
-   <td class="p-4 font-bold">${t.data().name}</td>
-   <td class="p-4">${own.length}</td>
-   <td class="p-4">—</td>
-   <td class="p-4">${own.length>=5?'🔴 Heavy':own.length>=3?'🟡 Medium':'🟢 Light'}</td>
-  </tr>`;
- });
-}
-
-document.getElementById('logoutBtn').onclick=()=>signOut(auth);
-</script>
 </body>
 </html>
