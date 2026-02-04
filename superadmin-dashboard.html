@@ -1,0 +1,264 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SVLS | Admin Command Core</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;800&display=swap');
+        body { font-family: 'Plus Jakarta Sans', sans-serif; }
+        .sidebar-link.active { background: #1e40af; border-right: 4px solid #fbbf24; color: white; }
+        .tab-content { display: none; }
+        .tab-content.active { display: block; }
+        .stat-card:hover { transform: translateY(-5px); transition: all 0.3s ease; }
+    </style>
+</head>
+<body class="bg-slate-50 min-h-screen flex text-slate-900">
+
+    <aside class="w-72 bg-blue-950 text-slate-300 flex-shrink-0 flex flex-col sticky top-0 h-screen shadow-2xl z-50">
+        <div class="p-8 border-b border-blue-900">
+            <h1 class="text-2xl font-black tracking-tighter text-white italic">SVLS <span class="text-blue-400">CORE</span></h1>
+            <p id="adminEmail" class="text-[10px] font-bold uppercase tracking-widest text-blue-500 mt-2 truncate"></p>
+        </div>
+
+        <nav class="flex-1 mt-6">
+            <button onclick="showTab('dashboard')" class="sidebar-link active w-full flex items-center gap-4 px-8 py-4 transition-all hover:text-white">
+                <i class="fas fa-chart-pie"></i> <span class="text-xs font-black uppercase">Analytics</span>
+            </button>
+            <button onclick="showTab('approvals')" class="sidebar-link w-full flex items-center gap-4 px-8 py-4 transition-all hover:text-white">
+                <i class="fas fa-user-shield"></i> <span class="text-xs font-black uppercase">Approvals</span>
+            </button>
+            <button onclick="showTab('academic')" class="sidebar-link w-full flex items-center gap-4 px-8 py-4 transition-all hover:text-white">
+                <i class="fas fa-university"></i> <span class="text-xs font-black uppercase">Academic Setup</span>
+            </button>
+            <button onclick="showTab('assignments')" class="sidebar-link w-full flex items-center gap-4 px-8 py-4 transition-all hover:text-white">
+                <i class="fas fa-link"></i> <span class="text-xs font-black uppercase">Assignments</span>
+            </button>
+        </nav>
+
+        <div class="p-6">
+            <button id="logoutBtn" class="w-full bg-rose-600 hover:bg-rose-700 text-white py-3 rounded-xl font-black text-[10px] uppercase transition-all shadow-lg">Logout</button>
+        </div>
+    </aside>
+
+    <main class="flex-1 overflow-y-auto">
+        <header class="bg-white/80 backdrop-blur-md border-b p-6 flex justify-between items-center sticky top-0 z-40">
+            <h2 id="tabTitle" class="text-xs font-black text-slate-400 uppercase tracking-[0.3em]">Analytics Dashboard</h2>
+            <div class="flex items-center gap-4">
+                <button onclick="refreshAll()" class="text-blue-600 hover:rotate-180 transition-all duration-500"><i class="fas fa-sync-alt"></i></button>
+            </div>
+        </header>
+
+        <div class="p-10 max-w-7xl mx-auto space-y-12">
+
+            <section id="dashboard" class="tab-content active space-y-8">
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    <div class="stat-card bg-white p-6 rounded-[2rem] shadow-sm border border-slate-200">
+                        <p class="text-[10px] font-black text-slate-400 uppercase">Active Students</p>
+                        <h3 id="statStudents" class="text-3xl font-black text-blue-600">0</h3>
+                    </div>
+                    <div class="stat-card bg-white p-6 rounded-[2rem] shadow-sm border border-slate-200">
+                        <p class="text-[10px] font-black text-slate-400 uppercase">Total Faculty</p>
+                        <h3 id="statTeachers" class="text-3xl font-black text-indigo-600">0</h3>
+                    </div>
+                    <div class="stat-card bg-white p-6 rounded-[2rem] shadow-sm border border-slate-200">
+                        <p class="text-[10px] font-black text-slate-400 uppercase">Classes Open</p>
+                        <h3 id="statClasses" class="text-3xl font-black text-emerald-600">0</h3>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                    <div class="bg-white p-8 rounded-[2.5rem] shadow-sm border">
+                        <h4 class="text-xs font-black uppercase mb-6 text-slate-400">Enrollment by Course</h4>
+                        <canvas id="enrollmentChart" height="200"></canvas>
+                    </div>
+                    <div class="bg-white p-8 rounded-[2.5rem] shadow-sm border">
+                        <h4 class="text-xs font-black uppercase mb-6 text-slate-400">Teacher Load Distribution</h4>
+                        <canvas id="teacherLoadChart" height="200"></canvas>
+                    </div>
+                </div>
+            </section>
+
+            <section id="approvals" class="tab-content">
+                <div class="bg-white rounded-[2rem] shadow-sm border overflow-hidden">
+                    <table class="w-full text-left">
+                        <thead class="bg-slate-50 text-[10px] font-black uppercase text-slate-400 border-b">
+                            <tr><th class="p-6">Account Email</th><th class="p-6 text-right">Actions</th></tr>
+                        </thead>
+                        <tbody id="pendingTable" class="divide-y"></tbody>
+                    </table>
+                </div>
+            </section>
+
+            <section id="academic" class="tab-content space-y-10">
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                    <div class="bg-white p-8 rounded-[2rem] border">
+                        <h4 class="font-black text-xs uppercase mb-6">New Course</h4>
+                        <form id="courseForm" class="space-y-4">
+                            <input type="text" id="courseName" placeholder="Course Code" class="w-full p-4 bg-slate-50 rounded-xl outline-blue-600 font-bold" required>
+                            <input type="number" id="totalYears" placeholder="Years" class="w-full p-4 bg-slate-50 rounded-xl outline-blue-600 font-bold" required>
+                            <button class="w-full bg-blue-600 text-white py-4 rounded-xl font-black uppercase text-[10px]">Add Course</button>
+                        </form>
+                    </div>
+                    <div class="bg-white p-8 rounded-[2rem] border">
+                        <h4 class="font-black text-xs uppercase mb-6">Register Subject</h4>
+                        <form id="subjectForm" class="space-y-4">
+                            <input type="text" id="subjName" placeholder="Subject Name" class="w-full p-4 bg-slate-50 rounded-xl outline-blue-600 font-bold" required>
+                            <select id="subjCourse" class="w-full p-4 bg-slate-50 rounded-xl font-bold"></select>
+                            <button class="w-full bg-indigo-600 text-white py-4 rounded-xl font-black uppercase text-[10px]">Add Subject</button>
+                        </form>
+                    </div>
+                </div>
+                <div class="bg-white rounded-[2rem] border overflow-hidden">
+                    <div class="p-4 bg-slate-50 border-b text-[10px] font-black uppercase text-slate-400">System Records (CRUD)</div>
+                    <table class="w-full text-left text-sm">
+                        <tbody id="crudTable" class="divide-y"></tbody>
+                    </table>
+                </div>
+            </section>
+
+            <section id="assignments" class="tab-content space-y-8">
+                <div class="bg-white p-8 rounded-[2rem] border border-blue-100">
+                    <h4 class="font-black text-xs uppercase mb-6">Assign Teacher to Subject</h4>
+                    <form id="classForm" class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <select id="classSubject" class="p-4 bg-slate-50 rounded-xl font-bold outline-blue-600" required></select>
+                        <select id="classTeacher" class="p-4 bg-slate-50 rounded-xl font-bold outline-blue-600" required></select>
+                        <input type="text" id="classYear" placeholder="2026-2027" class="p-4 bg-slate-50 rounded-xl font-bold outline-blue-600" required>
+                        <select id="classSem" class="p-4 bg-slate-50 rounded-xl font-bold outline-blue-600">
+                            <option value="1">1st Sem</option><option value="2">2nd Sem</option>
+                        </select>
+                        <button class="md:col-span-2 bg-emerald-600 text-white py-4 rounded-xl font-black uppercase text-[10px]">Initialize Class Record</button>
+                    </form>
+                </div>
+                <div id="assignmentList" class="grid grid-cols-1 md:grid-cols-2 gap-4"></div>
+            </section>
+
+        </div>
+    </main>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+        import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+        import { getFirestore, collection, getDocs, doc, setDoc, updateDoc, deleteDoc, getDoc, query, where } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+
+        const firebaseConfig = { /* CONFIG HERE */ };
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const db = getFirestore(app);
+
+        let enrollmentChart, teacherLoadChart;
+
+        window.showTab = (tab) => {
+            document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+            document.querySelectorAll('.sidebar-link').forEach(l => l.classList.remove('active'));
+            document.getElementById(tab).classList.add('active');
+            event.currentTarget.classList.add('active');
+            document.getElementById('tabTitle').innerText = tab.charAt(0).toUpperCase() + tab.slice(1);
+            if(tab === 'dashboard') initCharts();
+        };
+
+        async function refreshAll() {
+            loadPending();
+            loadDropdowns();
+            loadCRUD();
+            loadAssignments();
+            if(document.getElementById('dashboard').classList.contains('active')) initCharts();
+        }
+
+        // --- CHARTING ENGINE ---
+        async function initCharts() {
+            const students = await getDocs(collection(db, "students"));
+            const teachers = await getDocs(collection(db, "teachers"));
+            const classes = await getDocs(collection(db, "classes"));
+
+            document.getElementById('statStudents').innerText = students.size;
+            document.getElementById('statTeachers').innerText = teachers.size;
+            document.getElementById('statClasses').innerText = classes.size;
+
+            // Simple Chart Example Data (Usually derived from data loops)
+            if(enrollmentChart) enrollmentChart.destroy();
+            enrollmentChart = new Chart(document.getElementById('enrollmentChart'), {
+                type: 'bar',
+                data: {
+                    labels: ['BSIT', 'BSBA', 'BSHM', 'BSED'],
+                    datasets: [{ label: 'Enrollment', data: [12, 19, 7, 15], backgroundColor: '#3b82f6', borderRadius: 10 }]
+                }
+            });
+
+            if(teacherLoadChart) teacherLoadChart.destroy();
+            teacherLoadChart = new Chart(document.getElementById('teacherLoadChart'), {
+                type: 'doughnut',
+                data: {
+                    labels: ['Faculty A', 'Faculty B', 'Faculty C'],
+                    datasets: [{ data: [5, 3, 4], backgroundColor: ['#6366f1', '#10b981', '#f59e0b'] }]
+                }
+            });
+        }
+
+        // --- CRUD & ASSIGNMENTS ---
+        async function loadCRUD() {
+            const table = document.getElementById('crudTable');
+            table.innerHTML = "";
+            const categories = ['teachers', 'subjects', 'courses'];
+            for(const cat of categories) {
+                const snap = await getDocs(collection(db, cat));
+                snap.forEach(d => {
+                    table.innerHTML += `<tr class="hover:bg-slate-50">
+                        <td class="p-4 font-bold text-xs uppercase">${cat.slice(0,-1)}</td>
+                        <td class="p-4 font-bold">${d.data().name}</td>
+                        <td class="p-4 text-right">
+                            <button onclick="deleteEntry('${cat}', '${d.id}')" class="text-rose-500 hover:scale-110 transition-all"><i class="fas fa-trash-alt"></i></button>
+                        </td>
+                    </tr>`;
+                });
+            }
+        }
+
+        async function loadAssignments() {
+            const list = document.getElementById('assignmentList');
+            list.innerHTML = "";
+            const snap = await getDocs(collection(db, "classes"));
+            for(const d of snap.docs) {
+                const sub = await getDoc(doc(db, "subjects", d.data().subjectId));
+                const tea = await getDoc(doc(db, "teachers", d.data().teacherId));
+                list.innerHTML += `
+                <div class="bg-white p-6 rounded-3xl border flex justify-between items-center shadow-sm">
+                    <div>
+                        <h5 class="font-black text-sm uppercase text-blue-900">${sub.exists() ? sub.data().name : 'Unknown'}</h5>
+                        <p class="text-[10px] font-bold text-slate-400">TEACHER: ${tea.exists() ? tea.data().name : 'Unknown'}</p>
+                    </div>
+                    <button onclick="deleteEntry('classes', '${d.id}')" class="bg-rose-50 text-rose-600 px-3 py-2 rounded-xl text-[10px] font-black"><i class="fas fa-unlink"></i></button>
+                </div>`;
+            }
+        }
+
+        window.deleteEntry = async (col, id) => {
+            if(confirm("Confirm deletion of this system record?")) {
+                await deleteDoc(doc(db, col, id)); refreshAll();
+            }
+        };
+
+        // --- DUP PREVENTION ---
+        document.getElementById('classForm').onsubmit = async (e) => {
+            e.preventDefault();
+            const sid = document.getElementById('classSubject').value;
+            const tid = document.getElementById('classTeacher').value;
+            const sy = document.getElementById('classYear').value;
+            const sem = document.getElementById('classSem').value;
+            const uid = `${sid}_${tid}_${sy}_${sem}`.replace(/\s+/g, '');
+            
+            const check = await getDoc(doc(db, "classes", uid));
+            if(check.exists()) return alert("Assignment Conflict: Record already exists for this term.");
+
+            await setDoc(doc(db, "classes", uid), { subjectId: sid, teacherId: tid, schoolYear: sy, semester: sem });
+            alert("Class Assignment Finalized."); refreshAll();
+        };
+
+        onAuthStateChanged(auth, u => { if(u) { document.getElementById('adminEmail').innerText = u.email; refreshAll(); } else window.location.href="login.html"; });
+        document.getElementById('logoutBtn').onclick = () => signOut(auth);
+    </script>
+</body>
+</html>
