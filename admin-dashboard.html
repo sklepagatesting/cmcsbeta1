@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Dashboard - SVLS</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-100">
+
+    <nav class="bg-blue-700 text-white p-4 shadow-md flex justify-between items-center">
+        <h1 class="text-xl font-bold">SVLS Admin Panel</h1>
+        <button id="logoutBtn" class="bg-red-500 px-4 py-2 rounded hover:bg-red-600 transition text-sm">Logout</button>
+    </nav>
+
+    <div class="p-8 max-w-6xl mx-auto">
+        <h2 class="text-2xl font-semibold mb-6">Pending Student Approvals</h2>
+
+        <div class="bg-white rounded-lg shadow overflow-hidden">
+            <table class="min-w-full leading-normal">
+                <thead>
+                    <tr class="bg-gray-200 text-gray-700 text-left text-xs uppercase font-semibold">
+                        <th class="px-5 py-3 border-b">Student Name</th>
+                        <th class="px-5 py-3 border-b">Email</th>
+                        <th class="px-5 py-3 border-b">Course/Year</th>
+                        <th class="px-5 py-3 border-b">Action</th>
+                    </tr>
+                </thead>
+                <tbody id="pendingTable" class="text-sm">
+                    </tbody>
+            </table>
+            <div id="noData" class="p-10 text-center text-gray-500 hidden">No pending approvals found.</div>
+        </div>
+    </div>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+        import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+        import { getFirestore, collection, query, where, getDocs, doc, updateDoc, writeBatch } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+
+const firebaseConfig = {
+  apiKey: "AIzaSyBK-v8xtt7x0AA_btC0oE88IolgU9m5Q3E",
+  authDomain: "cmcsvls.firebaseapp.com",
+  projectId: "cmcsvls",
+  storageBucket: "cmcsvls.firebasestorage.app",
+  messagingSenderId: "973791112453",
+  appId: "1:973791112453:web:728b9ac51c0f3f89955b6c",
+  measurementId: "G-7KEY33ZZHE"
+};
+
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const db = getFirestore(app);
+
+        // Security: Ensure only Admin can stay here
+        onAuthStateChanged(auth, async (user) => {
+            if (!user) {
+                window.location.href = "login.html";
+            }
+        });
+
+        // Fetch Pending Students
+        async function loadPendingStudents() {
+            const tbody = document.getElementById('pendingTable');
+            const noData = document.getElementById('noData');
+            tbody.innerHTML = "";
+            
+            // Query for inactive users with role 'student'
+            const q = query(collection(db, "users"), where("active", "==", false), where("role", "==", "student"));
+            const querySnapshot = await getDocs(q);
+
+            if (querySnapshot.empty) {
+                noData.classList.remove('hidden');
+                return;
+            }
+
+            noData.classList.add('hidden');
+
+            querySnapshot.forEach((userDoc) => {
+                const userData = userDoc.data();
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td class="px-5 py-5 border-b border-gray-200 bg-white">${userData.email}</td>
+                    <td class="px-5 py-5 border-b border-gray-200 bg-white">Student</td>
+                    <td class="px-5 py-5 border-b border-gray-200 bg-white">Pending Approval</td>
+                    <td class="px-5 py-5 border-b border-gray-200 bg-white">
+                        <button onclick="approveUser('${userDoc.id}')" class="bg-green-500 text-white px-3 py-1 rounded hover:bg-green-600 transition">Approve</button>
+                    </td>
+                `;
+                tbody.appendChild(tr);
+            });
+        }
+
+        // Global function for the button
+        window.approveUser = async (uid) => {
+            if (confirm("Approve this student?")) {
+                try {
+                    // Update the user status to active
+                    await updateDoc(doc(db, "users", uid), {
+                        active: true
+                    });
+                    
+                    alert("Student approved successfully!");
+                    loadPendingStudents(); // Refresh list
+                } catch (error) {
+                    alert("Error approving student: " + error.message);
+                }
+            }
+        };
+
+        document.getElementById('logoutBtn').addEventListener('click', () => {
+            signOut(auth).then(() => window.location.href = "login.html");
+        });
+
+        loadPendingStudents();
+    </script>
+</body>
+</html>
