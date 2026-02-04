@@ -3,83 +3,91 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Advanced Teacher Dashboard | SVLS</title>
+    <title>Pro Teacher Dashboard | SVLS</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
 </head>
-<body class="bg-slate-50 min-h-screen">
+<body class="bg-slate-50 min-h-screen text-slate-800">
 
-    <nav class="bg-indigo-900 text-white p-4 shadow-xl flex justify-between items-center sticky top-0 z-50">
+    <nav class="bg-indigo-950 text-white p-4 shadow-2xl flex justify-between items-center sticky top-0 z-50">
         <div class="flex items-center gap-3">
-            <div class="bg-indigo-500 p-2 rounded-lg"><i class="fas fa-chalkboard-teacher"></i></div>
-            <h1 class="text-xl font-bold tracking-wide">SVLS PRO Dashboard</h1>
+            <div class="bg-indigo-500 p-2 rounded-lg shadow-inner"><i class="fas fa-shield-halved"></i></div>
+            <h1 class="text-xl font-black tracking-tighter">SVLS <span class="text-indigo-400">COMMAND</span></h1>
         </div>
-        <button id="logoutBtn" class="bg-rose-500 hover:bg-rose-600 px-5 py-2 rounded-full text-sm font-bold transition-all shadow-lg">Logout</button>
+        <button id="logoutBtn" class="bg-rose-600 hover:bg-rose-700 px-6 py-2 rounded-full text-xs font-black uppercase transition-all shadow-lg">Logout</button>
     </nav>
 
-    <div class="p-6 max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-12 gap-6">
+    <div class="p-6 max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-12 gap-8">
         
         <aside class="lg:col-span-3 space-y-4">
-            <div class="bg-white p-5 rounded-2xl shadow-sm border border-slate-200">
-                <h3 class="text-slate-400 uppercase text-xs font-black tracking-widest mb-4">My Assigned Classes</h3>
-                <div id="classList" class="space-y-3">
-                    </div>
+            <div class="bg-white p-5 rounded-3xl shadow-sm border border-slate-200">
+                <h3 class="text-slate-400 uppercase text-[10px] font-black tracking-[0.2em] mb-4">Assigned Classes</h3>
+                <div id="classList" class="space-y-3"></div>
             </div>
         </aside>
 
         <main class="lg:col-span-9 space-y-6">
-            <div id="welcomeScreen" class="bg-white p-12 rounded-3xl shadow-sm border text-center">
-                <i class="fas fa-arrow-left text-4xl text-indigo-200 mb-4"></i>
-                <h2 class="text-2xl font-bold text-slate-700">Select a class to manage records</h2>
+            <div id="welcomeScreen" class="bg-white p-20 rounded-[2rem] shadow-sm border border-dashed border-slate-300 text-center">
+                <div class="text-6xl mb-4 text-slate-200"><i class="fas fa-layer-group"></i></div>
+                <h2 class="text-2xl font-bold text-slate-400">Initialize a Class Session</h2>
             </div>
 
             <div id="mainDashboard" class="hidden space-y-6">
-                <div class="bg-white p-6 rounded-2xl shadow-sm border flex flex-col md:flex-row md:items-center justify-between gap-4">
+                <div class="bg-white p-8 rounded-[2rem] shadow-sm border border-slate-200 flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
                     <div>
-                        <h2 id="activeClassName" class="text-2xl font-black text-slate-800">---</h2>
-                        <p id="activeClassDetails" class="text-slate-500 text-sm"></p>
+                        <span id="classTag" class="bg-indigo-100 text-indigo-700 text-[10px] font-black px-3 py-1 rounded-full uppercase mb-2 inline-block">Class Active</span>
+                        <h2 id="activeClassName" class="text-3xl font-black text-slate-900 leading-tight"></h2>
+                        <p id="activeClassDetails" class="text-slate-500 font-medium"></p>
                     </div>
-                    <div class="flex bg-slate-100 p-1 rounded-xl">
-                        <button onclick="switchTab('attendance')" class="tab-btn px-6 py-2 rounded-lg font-bold text-sm transition-all bg-white shadow-sm text-indigo-600" id="tab-attendance">Attendance</button>
-                        <button onclick="switchTab('grades')" class="tab-btn px-6 py-2 rounded-lg font-bold text-sm transition-all text-slate-600" id="tab-grades">Grades</button>
-                        <button onclick="switchTab('materials')" class="tab-btn px-6 py-2 rounded-lg font-bold text-sm transition-all text-slate-600" id="tab-materials">Resources</button>
+                    <div class="flex bg-slate-100 p-1.5 rounded-2xl w-full md:w-auto overflow-x-auto">
+                        <button onclick="switchTab('attendance')" id="tab-attendance" class="tab-btn px-5 py-2.5 rounded-xl font-bold text-xs transition-all whitespace-nowrap">Attendance</button>
+                        <button onclick="switchTab('grades')" id="tab-grades" class="tab-btn px-5 py-2.5 rounded-xl font-bold text-xs transition-all whitespace-nowrap">Grades & Status</button>
+                        <button onclick="switchTab('resources')" id="tab-resources" class="tab-btn px-5 py-2.5 rounded-xl font-bold text-xs transition-all whitespace-nowrap">Resources & Quizzes</button>
                     </div>
                 </div>
 
-                <div class="bg-white rounded-2xl shadow-sm border p-6">
+                <div class="bg-white rounded-[2rem] shadow-sm border border-slate-200 p-8">
                     
                     <div id="panel-attendance" class="panel">
-                        <div class="flex items-center justify-between mb-6">
-                            <input type="date" id="attendanceDate" class="border p-2 rounded-lg outline-indigo-500">
-                            <button onclick="loadAttendanceByDate()" class="bg-indigo-600 text-white px-4 py-2 rounded-lg text-sm font-bold">Load Records</button>
+                        <div class="flex flex-wrap items-center justify-between gap-4 mb-8">
+                            <div class="flex items-center gap-3">
+                                <label class="text-xs font-black uppercase text-slate-400">Date:</label>
+                                <input type="date" id="attendanceDate" class="border-2 border-slate-100 p-2 rounded-xl focus:border-indigo-500 outline-none font-bold text-sm">
+                            </div>
+                            <button onclick="loadAttendanceByDate()" class="bg-slate-900 text-white px-6 py-2.5 rounded-xl text-xs font-bold hover:bg-indigo-600 transition-colors">Fetch Logs</button>
                         </div>
-                        <div id="attendanceContainer" class="overflow-x-auto"></div>
+                        <div id="attendanceContainer"></div>
                     </div>
 
                     <div id="panel-grades" class="panel hidden">
-                        <div class="flex items-center justify-between mb-6">
-                            <h3 class="font-bold">Final Grading Sheets</h3>
-                            <span class="text-xs text-slate-400">Updates are saved automatically on change</span>
-                        </div>
                         <div id="gradesContainer" class="overflow-x-auto"></div>
                     </div>
 
-                    <div id="panel-materials" class="panel hidden">
-                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                            <div class="border-r pr-6">
-                                <h4 class="font-bold mb-4">Post Quiz/Material Link</h4>
+                    <div id="panel-resources" class="panel hidden">
+                        <div class="grid grid-cols-1 lg:grid-cols-2 gap-10">
+                            <div>
+                                <h4 class="font-black text-lg mb-6 flex items-center gap-2"><i class="fas fa-plus-circle text-indigo-500"></i> New Resource</h4>
                                 <form id="resourceForm" class="space-y-4">
-                                    <input type="text" id="resTitle" placeholder="Title (e.g., Midterm Quiz)" class="w-full p-2 border rounded-lg" required>
-                                    <input type="url" id="resLink" placeholder="URL (Google Form/PDF Link)" class="w-full p-2 border rounded-lg" required>
-                                    <select id="resType" class="w-full p-2 border rounded-lg">
-                                        <option value="Quiz">Quiz</option>
-                                        <option value="Material">Material</option>
-                                    </select>
-                                    <button class="w-full bg-emerald-600 text-white py-2 rounded-lg font-bold">Post Resource</button>
+                                    <input type="text" id="resTitle" placeholder="Resource Title" class="w-full p-3 bg-slate-50 border-2 border-transparent focus:border-indigo-500 rounded-xl outline-none transition-all" required>
+                                    <input type="url" id="resLink" placeholder="https://external-link.com" class="w-full p-3 bg-slate-50 border-2 border-transparent focus:border-indigo-500 rounded-xl outline-none transition-all" required>
+                                    <div class="grid grid-cols-2 gap-4">
+                                        <div>
+                                            <label class="text-[10px] font-black text-slate-400 uppercase ml-1">Type</label>
+                                            <select id="resType" class="w-full p-3 bg-slate-50 rounded-xl border-none outline-none">
+                                                <option value="Quiz">Quiz</option>
+                                                <option value="Assignment">Assignment</option>
+                                                <option value="Reading">Reading Material</option>
+                                            </select>
+                                        </div>
+                                        <div>
+                                            <label class="text-[10px] font-black text-slate-400 uppercase ml-1">Schedule Publish</label>
+                                            <input type="datetime-local" id="resDate" class="w-full p-3 bg-slate-50 rounded-xl border-none outline-none">
+                                        </div>
+                                    </div>
+                                    <button class="w-full bg-indigo-600 text-white py-4 rounded-2xl font-black shadow-lg shadow-indigo-200 hover:bg-indigo-700 transition-all">Publish to Class</button>
                                 </form>
                             </div>
-                            <div id="resourceList" class="space-y-2">
-                                </div>
+                            <div id="resourceList" class="space-y-3"></div>
                         </div>
                     </div>
 
@@ -91,9 +99,9 @@
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
         import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
-        import { getFirestore, collection, query, where, getDocs, doc, getDoc, setDoc, deleteDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+        import { getFirestore, collection, query, where, getDocs, doc, getDoc, setDoc, updateDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
-        const firebaseConfig = {
+const firebaseConfig = {
   apiKey: "AIzaSyBK-v8xtt7x0AA_btC0oE88IolgU9m5Q3E",
   authDomain: "cmcsvls.firebaseapp.com",
   projectId: "cmcsvls",
@@ -106,154 +114,148 @@
         const auth = getAuth(app);
         const db = getFirestore(app);
 
-        let teacherId, selectedClassId, students = [];
+        let tid, classId, studentsList = [];
 
-        onAuthStateChanged(auth, u => { 
-            if(!u) window.location.href="login.html"; 
-            else { teacherId = u.uid; loadClasses(); } 
-        });
+        onAuthStateChanged(auth, u => { if(u){ tid=u.uid; loadClasses(); } else window.location.href="login.html"; });
 
-        // LOAD CLASSES
         async function loadClasses() {
             const list = document.getElementById('classList');
-            const snap = await getDocs(query(collection(db, "classes"), where("teacherId", "==", teacherId)));
+            const snap = await getDocs(query(collection(db, "classes"), where("teacherId", "==", tid)));
             list.innerHTML = "";
             snap.forEach(async d => {
                 const sub = await getDoc(doc(db, "subjects", d.data().subjectId));
                 const div = document.createElement('div');
-                div.className = "p-4 bg-slate-50 rounded-xl cursor-pointer hover:bg-indigo-50 border-2 border-transparent hover:border-indigo-200 transition-all group";
-                div.innerHTML = `<h4 class="font-bold text-slate-700 group-hover:text-indigo-700">${sub.data().name}</h4><p class="text-xs text-slate-400">${d.data().schoolYear}</p>`;
+                div.className = "p-5 bg-white border border-slate-100 rounded-2xl cursor-pointer hover:shadow-md hover:border-indigo-200 transition-all group";
+                div.innerHTML = `<h4 class="font-bold text-slate-800 group-hover:text-indigo-600 transition-colors">${sub.data().name}</h4><p class="text-[10px] font-black text-slate-300 uppercase mt-1">${d.data().schoolYear}</p>`;
                 div.onclick = () => selectClass(d.id, sub.data().name, d.data());
                 list.appendChild(div);
             });
         }
 
-        // SELECT CLASS
         async function selectClass(id, name, details) {
-            selectedClassId = id;
+            classId = id;
             document.getElementById('welcomeScreen').classList.add('hidden');
             document.getElementById('mainDashboard').classList.remove('hidden');
             document.getElementById('activeClassName').innerText = name;
-            document.getElementById('activeClassDetails').innerText = `SY: ${details.schoolYear} | Sem: ${details.semester}`;
+            document.getElementById('activeClassDetails').innerText = `${details.schoolYear} • Semester ${details.semester}`;
             
-            // Fetch Students (Names + IDs)
             const sSnap = await getDocs(query(collection(db, "students"), where("status", "==", "enrolled")));
-            students = sSnap.docs.map(d => ({ id: d.id, ...d.data() }));
+            studentsList = sSnap.docs.map(d => ({ id: d.id, ...d.data() }));
             
-            loadAttendanceByDate();
+            switchTab('attendance');
             loadResources();
         }
 
-        // TAB SWITCHING
-        window.switchTab = (tab) => {
+        window.switchTab = (t) => {
             document.querySelectorAll('.panel').forEach(p => p.classList.add('hidden'));
-            document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('bg-white', 'shadow-sm', 'text-indigo-600'));
-            document.getElementById(`panel-${tab}`).classList.remove('hidden');
-            document.getElementById(`tab-${tab}`).classList.add('bg-white', 'shadow-sm', 'text-indigo-600');
-            if(tab === 'grades') loadGrades();
-        }
+            document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('bg-indigo-600', 'text-white', 'shadow-indigo-200', 'shadow-lg'));
+            document.getElementById(`panel-${t}`).classList.remove('hidden');
+            document.getElementById(`tab-${t}`).classList.add('bg-indigo-600', 'text-white', 'shadow-indigo-200', 'shadow-lg');
+            if(t === 'grades') loadGrades();
+        };
 
-        // ADVANCED ATTENDANCE (Per Date + Save/Update)
+        // --- ATTENDANCE ---
         window.loadAttendanceByDate = async () => {
             const date = document.getElementById('attendanceDate').value || new Date().toISOString().split('T')[0];
             document.getElementById('attendanceDate').value = date;
-            
             const container = document.getElementById('attendanceContainer');
-            container.innerHTML = `<table class="w-full">
-                <thead class="bg-slate-50 text-xs"><tr><th class="p-3">Student Name</th><th class="p-3">Status</th></tr></thead>
-                <tbody id="attBody" class="divide-y"></tbody>
-            </table>`;
-            
+            container.innerHTML = `<table class="w-full text-left"><tbody id="attBody" class="divide-y divide-slate-50"></tbody></table>`;
             const body = document.getElementById('attBody');
-            for(let s of students) {
-                const attId = `${selectedClassId}_${s.id}_${date}`;
-                const attDoc = await getDoc(doc(db, "attendance", attId));
-                const currentStatus = attDoc.exists() ? attDoc.data().status : "";
+            
+            for(let s of studentsList) {
+                const snap = await getDoc(doc(db, "attendance", `${classId}_${s.id}_${date}`));
+                const status = snap.exists() ? snap.data().status : "";
+                body.innerHTML += `<tr><td class="py-4 font-bold text-sm">${s.firstName} ${s.lastName}</td><td class="text-right">
+                    <select onchange="saveAtt('${s.id}', this.value)" class="bg-slate-50 p-2 rounded-xl text-xs font-bold outline-none">
+                        <option value="">MARK</option>
+                        <option value="Present" ${status=='Present'?'selected':''}>PRESENT</option>
+                        <option value="Absent" ${status=='Absent'?'selected':''}>ABSENT</option>
+                    </select>
+                </td></tr>`;
+            }
+        };
 
-                body.innerHTML += `<tr>
-                    <td class="p-3 text-sm font-bold">${s.firstName} ${s.lastName}</td>
-                    <td class="p-3">
-                        <select onchange="saveAtt('${s.id}', this.value)" class="border rounded-md p-1 text-sm ${currentStatus ? 'bg-green-50 border-green-200' : ''}">
-                            <option value="">--Select--</option>
-                            <option value="Present" ${currentStatus=='Present'?'selected':''}>Present</option>
-                            <option value="Absent" ${currentStatus=='Absent'?'selected':''}>Absent</option>
-                            <option value="Late" ${currentStatus=='Late'?'selected':''}>Late</option>
+        window.saveAtt = async (sid, status) => {
+            const date = document.getElementById('attendanceDate').value;
+            await setDoc(doc(db, "attendance", `${classId}_${sid}_${date}`), { classId, studentId: sid, date, status }, { merge: true });
+        };
+
+        // --- GRADES & ENROLLMENT STATUS (DROP/FAIL) ---
+        async function loadGrades() {
+            const body = document.getElementById('gradesContainer');
+            body.innerHTML = `<table class="w-full text-left">
+                <thead class="text-[10px] font-black text-slate-400 uppercase"><tr><th class="pb-4">Student</th><th class="pb-4">Numeric</th><th class="pb-4">Rating</th><th class="pb-4">Enrolment Status</th></tr></thead>
+                <tbody id="gradeBody" class="divide-y divide-slate-50"></tbody>
+            </table>`;
+            const tbody = document.getElementById('gradeBody');
+
+            for(let s of studentsList) {
+                const gSnap = await getDoc(doc(db, "grades", `${classId}_${s.id}`));
+                const gData = gSnap.exists() ? gSnap.data() : { numericGrade: "", enrollmentStatus: "active" };
+                
+                tbody.innerHTML += `<tr>
+                    <td class="py-5 text-sm font-bold">${s.firstName} ${s.lastName}</td>
+                    <td><input type="number" value="${gData.numericGrade}" onchange="saveGrade('${s.id}', this.value)" class="bg-slate-50 w-16 p-2 rounded-lg font-bold text-center"></td>
+                    <td id="rt-${s.id}" class="font-black text-indigo-600">${gData.collegeGrade || '-'}</td>
+                    <td>
+                        <select onchange="updateEnrollStatus('${s.id}', this.value)" class="text-[10px] font-black p-2 rounded-lg border-2 ${gData.enrollmentStatus=='dropped'?'border-rose-200 text-rose-500':'border-slate-100'}">
+                            <option value="active" ${gData.enrollmentStatus=='active'?'selected':''}>ACTIVE</option>
+                            <option value="dropped" ${gData.enrollmentStatus=='dropped'?'selected':''}>DROPPED</option>
+                            <option value="failed" ${gData.enrollmentStatus=='failed'?'selected':''}>FAILED</option>
                         </select>
                     </td>
                 </tr>`;
             }
         }
 
-        window.saveAtt = async (sid, status) => {
-            const date = document.getElementById('attendanceDate').value;
-            const attId = `${selectedClassId}_${sid}_${date}`;
-            await setDoc(doc(db, "attendance", attId), {
-                classId: selectedClassId, studentId: sid, date, status
-            }, { merge: true });
-        }
-
-        // ADVANCED GRADES (Auto-calc + Save/Update)
-        async function loadGrades() {
-            const container = document.getElementById('gradesContainer');
-            container.innerHTML = `<table class="w-full text-left">
-                <thead class="bg-slate-50 text-xs uppercase"><tr><th class="p-3">Student Name</th><th class="p-3">Numeric</th><th class="p-3">College Grade</th></tr></thead>
-                <tbody id="gradeBody" class="divide-y"></tbody>
-            </table>`;
-            
-            const body = document.getElementById('gradeBody');
-            for(let s of students) {
-                const gId = `${selectedClassId}_${s.id}`;
-                const gDoc = await getDoc(doc(db, "grades", gId));
-                const gData = gDoc.exists() ? gDoc.data() : { numericGrade: "" };
-
-                body.innerHTML += `<tr>
-                    <td class="p-3 text-sm font-bold">${s.firstName} ${s.lastName}</td>
-                    <td class="p-3"><input type="number" value="${gData.numericGrade}" onchange="saveGrade('${s.id}', this.value)" class="border rounded p-1 w-20"></td>
-                    <td class="p-3 font-black text-indigo-600" id="cg-${s.id}">${gData.collegeGrade || '-'}</td>
-                </tr>`;
-            }
-        }
-
         window.saveGrade = async (sid, val) => {
-            let cg = 5.0;
-            if(val >= 75) cg = (3.0 - ((val - 75) * 0.08)).toFixed(2); // Dynamic scale example
-            if(val >= 95) cg = 1.0;
-            if(val < 75) cg = 5.0;
+            let cg = val >= 75 ? (1.0 + (100 - val) * 0.08).toFixed(2) : 5.0;
+            if (val >= 95) cg = "1.00";
+            document.getElementById(`rt-${sid}`).innerText = cg;
+            await setDoc(doc(db, "grades", `${classId}_${sid}`), { classId, studentId: sid, numericGrade: val, collegeGrade: cg }, { merge: true });
+        };
 
-            document.getElementById(`cg-${sid}`).innerText = cg;
-            await setDoc(doc(db, "grades", `${selectedClassId}_${sid}`), {
-                classId: selectedClassId, studentId: sid, numericGrade: val, collegeGrade: cg
-            }, { merge: true });
-        }
+        window.updateEnrollStatus = async (sid, status) => {
+            await setDoc(doc(db, "grades", `${classId}_${sid}`), { enrollmentStatus: status }, { merge: true });
+            alert(`Student marked as ${status.toUpperCase()}`);
+        };
 
-        // RESOURCES (Links/Quizzes)
+        // --- SCHEDULING & RESOURCES ---
         document.getElementById('resourceForm').onsubmit = async (e) => {
             e.preventDefault();
-            const resData = {
-                classId: selectedClassId,
+            const resId = `${classId}_${Date.now()}`;
+            await setDoc(doc(db, "resources", resId), {
+                classId,
                 title: document.getElementById('resTitle').value,
                 url: document.getElementById('resLink').value,
                 type: document.getElementById('resType').value,
+                publishDate: document.getElementById('resDate').value || new Date().toISOString(),
                 createdAt: new Date().toISOString()
-            };
-            await setDoc(doc(db, "resources", `${selectedClassId}_${Date.now()}`), resData);
+            });
             document.getElementById('resourceForm').reset();
             loadResources();
-        }
+        };
 
         async function loadResources() {
             const list = document.getElementById('resourceList');
-            const snap = await getDocs(query(collection(db, "resources"), where("classId", "==", selectedClassId)));
-            list.innerHTML = `<h4 class="text-xs font-bold text-slate-400 uppercase">Existing Resources</h4>`;
+            const snap = await getDocs(query(collection(db, "resources"), where("classId", "==", classId)));
+            list.innerHTML = `<h4 class="text-[10px] font-black text-slate-400 uppercase mb-4">Class Timeline</h4>`;
             snap.forEach(d => {
-                list.innerHTML += `<div class="p-3 bg-slate-50 rounded-lg flex justify-between items-center text-sm">
-                    <span><b>[${d.data().type}]</b> ${d.data().title}</span>
-                    <a href="${d.data().url}" target="_blank" class="text-indigo-600 hover:underline">Open</a>
+                const isScheduled = new Date(d.data().publishDate) > new Date();
+                list.innerHTML += `<div class="p-4 bg-slate-50 rounded-2xl flex justify-between items-center">
+                    <div>
+                        <p class="text-xs font-black text-indigo-600 uppercase">${d.data().type}</p>
+                        <h5 class="text-sm font-bold text-slate-800">${d.data().title}</h5>
+                        <p class="text-[10px] ${isScheduled?'text-amber-500':'text-slate-400'} font-bold">
+                            ${isScheduled ? 'Scheduled: ' : 'Published: '} ${new Date(d.data().publishDate).toLocaleString()}
+                        </p>
+                    </div>
+                    <a href="${d.data().url}" target="_blank" class="bg-white p-2 rounded-xl border border-slate-200 text-slate-400 hover:text-indigo-600"><i class="fas fa-external-link-alt"></i></a>
                 </div>`;
             });
         }
 
-        document.getElementById('logoutBtn').onclick = () => signOut(auth);
+        document.getElementById('logoutBtn').onclick = () => signOut(auth).then(()=>window.location.href="login.html");
     </script>
 </body>
 </html>
