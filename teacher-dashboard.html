@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Teacher Dashboard | SVLS</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-100 min-h-screen">
+
+    <nav class="bg-green-700 text-white p-4 shadow-md flex justify-between items-center">
+        <h1 class="text-xl font-bold">SVLS Teacher Portal</h1>
+        <button id="logoutBtn" class="bg-red-500 px-4 py-2 rounded text-sm hover:bg-red-600 transition">Logout</button>
+    </nav>
+
+    <div class="p-6 max-w-7xl mx-auto space-y-6">
+        
+        <div class="bg-white p-6 rounded-xl shadow-sm border">
+            <h2 class="text-2xl font-bold text-gray-800" id="welcomeMsg">Welcome, Teacher</h2>
+            <p class="text-gray-500">Manage your assigned classes and student performance below.</p>
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-4 gap-6">
+            <div class="lg:col-span-1 bg-white p-4 rounded-xl shadow-sm border">
+                <h3 class="font-bold text-green-700 mb-4 border-b pb-2">Your Classes</h3>
+                <ul id="classList" class="space-y-2">
+                    </ul>
+            </div>
+
+            <div class="lg:col-span-3 space-y-6">
+                
+                <div id="attendancePanel" class="hidden bg-white p-6 rounded-xl shadow-sm border">
+                    <h3 class="font-bold text-lg mb-4" id="activeClassName">Class Management</h3>
+                    
+                    <div class="flex gap-4 mb-6">
+                        <button onclick="showAttendance()" class="bg-green-100 text-green-700 px-4 py-2 rounded font-bold">Attendance</button>
+                        <button onclick="showGrades()" class="bg-blue-100 text-blue-700 px-4 py-2 rounded font-bold">Grades</button>
+                    </div>
+
+                    <div id="actionContent">
+                        <p class="text-gray-400">Select a class from the sidebar to begin.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+        import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+        import { getFirestore, collection, query, where, getDocs, doc, getDoc, addDoc, setDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+
+        const firebaseConfig = {
+  apiKey: "AIzaSyBK-v8xtt7x0AA_btC0oE88IolgU9m5Q3E",
+  authDomain: "cmcsvls.firebaseapp.com",
+  projectId: "cmcsvls",
+  storageBucket: "cmcsvls.firebasestorage.app",
+  messagingSenderId: "973791112453",
+  appId: "1:973791112453:web:728b9ac51c0f3f89955b6c",
+  measurementId: "G-7KEY33ZZHE"
+};
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const db = getFirestore(app);
+
+        let currentTeacherId = null;
+        let selectedClassId = null;
+        let studentsInClass = [];
+
+        onAuthStateChanged(auth, async (user) => {
+            if (!user) window.location.href = "login.html";
+            else {
+                currentTeacherId = user.uid;
+                loadTeacherClasses();
+            }
+        });
+
+        // 1. Load Classes assigned to this teacher
+        async function loadTeacherClasses() {
+            const list = document.getElementById('classList');
+            const q = query(collection(db, "classes"), where("teacherId", "==", currentTeacherId));
+            const snap = await getDocs(q);
+            
+            list.innerHTML = "";
+            snap.forEach(async (classDoc) => {
+                const classData = classDoc.data();
+                const subjDoc = await getDoc(doc(db, "subjects", classData.subjectId));
+                const subjName = subjDoc.exists() ? subjDoc.data().name : "Unknown Subject";
+                
+                const li = document.createElement('li');
+                li.className = "p-3 bg-gray-50 rounded cursor-pointer hover:bg-green-50 border border-transparent hover:border-green-200 transition";
+                li.innerText = subjName;
+                li.onclick = () => selectClass(classDoc.id, subjName);
+                list.appendChild(li);
+            });
+        }
+
+        // 2. Select Class and load Students (All approved students for now)
+        async function selectClass(id, name) {
+            selectedClassId = id;
+            document.getElementById('activeClassName').innerText = name;
+            document.getElementById('attendancePanel').classList.remove('hidden');
+            
+            // In MVP, we fetch all active students to populate the list
+            const q = query(collection(db, "users"), where("role", "==", "student"), where("active", "==", true));
+            const snap = await getDocs(q);
+            studentsInClass = [];
+            snap.forEach(d => studentsInClass.push({ id: d.id, email: d.data().email }));
+            
+            showAttendance();
+        }
+
+        // 3. Attendance UI
+        window.showAttendance = () => {
+            let html = `<table class="w-full text-left border-collapse">
+                <thead><tr class="bg-gray-100 text-xs">
+                    <th class="p-2 border">Student</th>
+                    <th class="p-2 border">Status</th>
+                </tr></thead><tbody>`;
+            
+            studentsInClass.forEach(s => {
+                html += `<tr>
+                    <td class="p-2 border text-sm">${s.email}</td>
+                    <td class="p-2 border text-sm">
+                        <select onchange="saveAttendance('${s.id}', this.value)" class="border rounded p-1">
+                            <option value="">--Mark--</option>
+                            <option value="Present">Present</option>
+                            <option value="Absent">Absent</option>
+                            <option value="Late">Late</option>
+                        </select>
+                    </td>
+                </tr>`;
+            });
+            html += `</tbody></table>`;
+            document.getElementById('actionContent').innerHTML = html;
+        };
+
+        // 4. Grades UI & Conversion Logic
+        window.showGrades = () => {
+            let html = `<table class="w-full text-left border-collapse">
+                <thead><tr class="bg-gray-100 text-xs">
+                    <th class="p-2 border">Student</th>
+                    <th class="p-2 border">Numeric (0-100)</th>
+                    <th class="p-2 border">College Grade</th>
+                </tr></thead><tbody>`;
+            
+            studentsInClass.forEach(s => {
+                html += `<tr>
+                    <td class="p-2 border text-sm">${s.email}</td>
+                    <td class="p-2 border"><input type="number" onchange="saveGrade('${s.id}', this.value)" class="w-20 border rounded p-1 text-sm"></td>
+                    <td class="p-2 border"><span id="cg-${s.id}" class="font-bold">-</span></td>
+                </tr>`;
+            });
+            html += `</tbody></table>`;
+            document.getElementById('actionContent').innerHTML = html;
+        };
+
+        // Save Attendance
+        window.saveAttendance = async (studentId, status) => {
+            if (!status) return;
+            await addDoc(collection(db, "attendance"), {
+                classId: selectedClassId,
+                studentId: studentId,
+                date: new Date().toISOString().split('T')[0],
+                status: status
+            });
+            console.log("Attendance Saved");
+        };
+
+        // Save Grade + Conversion
+        window.saveGrade = async (studentId, num) => {
+            let cg = 5.0; // Default Fail
+            if (num >= 95) cg = 1.0;
+            else if (num >= 90) cg = 1.5;
+            else if (num >= 85) cg = 2.0;
+            else if (num >= 80) cg = 2.5;
+            else if (num >= 75) cg = 3.0;
+
+            document.getElementById(`cg-${studentId}`).innerText = cg.toFixed(2);
+
+            await addDoc(collection(db, "grades"), {
+                studentId: studentId,
+                classId: selectedClassId,
+                numericGrade: num,
+                collegeGrade: cg,
+                remarks: cg <= 3.0 ? "Passed" : "Failed"
+            });
+        };
+
+        document.getElementById('logoutBtn').onclick = () => signOut(auth);
+    </script>
+</body>
+</html>
