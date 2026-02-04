@@ -3,189 +3,247 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Teacher Dashboard | SVLS</title>
+    <title>Advanced Teacher Dashboard | SVLS</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
 </head>
-<body class="bg-gray-100 min-h-screen">
+<body class="bg-slate-50 min-h-screen">
 
-    <nav class="bg-green-700 text-white p-4 shadow-md flex justify-between items-center">
-        <h1 class="text-xl font-bold">SVLS Teacher Portal</h1>
-        <button id="logoutBtn" class="bg-red-500 px-4 py-2 rounded text-sm hover:bg-red-600 transition">Logout</button>
+    <nav class="bg-indigo-900 text-white p-4 shadow-xl flex justify-between items-center sticky top-0 z-50">
+        <div class="flex items-center gap-3">
+            <div class="bg-indigo-500 p-2 rounded-lg"><i class="fas fa-chalkboard-teacher"></i></div>
+            <h1 class="text-xl font-bold tracking-wide">SVLS PRO Dashboard</h1>
+        </div>
+        <button id="logoutBtn" class="bg-rose-500 hover:bg-rose-600 px-5 py-2 rounded-full text-sm font-bold transition-all shadow-lg">Logout</button>
     </nav>
 
-    <div class="p-6 max-w-7xl mx-auto space-y-6">
+    <div class="p-6 max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-12 gap-6">
         
-        <div class="bg-white p-6 rounded-xl shadow-sm border">
-            <h2 class="text-2xl font-bold text-gray-800" id="welcomeMsg">Welcome, Teacher</h2>
-            <p class="text-gray-500">Manage your assigned classes and student performance below.</p>
-        </div>
+        <aside class="lg:col-span-3 space-y-4">
+            <div class="bg-white p-5 rounded-2xl shadow-sm border border-slate-200">
+                <h3 class="text-slate-400 uppercase text-xs font-black tracking-widest mb-4">My Assigned Classes</h3>
+                <div id="classList" class="space-y-3">
+                    </div>
+            </div>
+        </aside>
 
-        <div class="grid grid-cols-1 lg:grid-cols-4 gap-6">
-            <div class="lg:col-span-1 bg-white p-4 rounded-xl shadow-sm border">
-                <h3 class="font-bold text-green-700 mb-4 border-b pb-2">Your Classes</h3>
-                <ul id="classList" class="space-y-2">
-                    </ul>
+        <main class="lg:col-span-9 space-y-6">
+            <div id="welcomeScreen" class="bg-white p-12 rounded-3xl shadow-sm border text-center">
+                <i class="fas fa-arrow-left text-4xl text-indigo-200 mb-4"></i>
+                <h2 class="text-2xl font-bold text-slate-700">Select a class to manage records</h2>
             </div>
 
-            <div class="lg:col-span-3 space-y-6">
-                
-                <div id="attendancePanel" class="hidden bg-white p-6 rounded-xl shadow-sm border">
-                    <h3 class="font-bold text-lg mb-4" id="activeClassName">Class Management</h3>
-                    
-                    <div class="flex gap-4 mb-6">
-                        <button onclick="showAttendance()" class="bg-green-100 text-green-700 px-4 py-2 rounded font-bold">Attendance</button>
-                        <button onclick="showGrades()" class="bg-blue-100 text-blue-700 px-4 py-2 rounded font-bold">Grades</button>
+            <div id="mainDashboard" class="hidden space-y-6">
+                <div class="bg-white p-6 rounded-2xl shadow-sm border flex flex-col md:flex-row md:items-center justify-between gap-4">
+                    <div>
+                        <h2 id="activeClassName" class="text-2xl font-black text-slate-800">---</h2>
+                        <p id="activeClassDetails" class="text-slate-500 text-sm"></p>
                     </div>
-
-                    <div id="actionContent">
-                        <p class="text-gray-400">Select a class from the sidebar to begin.</p>
+                    <div class="flex bg-slate-100 p-1 rounded-xl">
+                        <button onclick="switchTab('attendance')" class="tab-btn px-6 py-2 rounded-lg font-bold text-sm transition-all bg-white shadow-sm text-indigo-600" id="tab-attendance">Attendance</button>
+                        <button onclick="switchTab('grades')" class="tab-btn px-6 py-2 rounded-lg font-bold text-sm transition-all text-slate-600" id="tab-grades">Grades</button>
+                        <button onclick="switchTab('materials')" class="tab-btn px-6 py-2 rounded-lg font-bold text-sm transition-all text-slate-600" id="tab-materials">Resources</button>
                     </div>
                 </div>
+
+                <div class="bg-white rounded-2xl shadow-sm border p-6">
+                    
+                    <div id="panel-attendance" class="panel">
+                        <div class="flex items-center justify-between mb-6">
+                            <input type="date" id="attendanceDate" class="border p-2 rounded-lg outline-indigo-500">
+                            <button onclick="loadAttendanceByDate()" class="bg-indigo-600 text-white px-4 py-2 rounded-lg text-sm font-bold">Load Records</button>
+                        </div>
+                        <div id="attendanceContainer" class="overflow-x-auto"></div>
+                    </div>
+
+                    <div id="panel-grades" class="panel hidden">
+                        <div class="flex items-center justify-between mb-6">
+                            <h3 class="font-bold">Final Grading Sheets</h3>
+                            <span class="text-xs text-slate-400">Updates are saved automatically on change</span>
+                        </div>
+                        <div id="gradesContainer" class="overflow-x-auto"></div>
+                    </div>
+
+                    <div id="panel-materials" class="panel hidden">
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <div class="border-r pr-6">
+                                <h4 class="font-bold mb-4">Post Quiz/Material Link</h4>
+                                <form id="resourceForm" class="space-y-4">
+                                    <input type="text" id="resTitle" placeholder="Title (e.g., Midterm Quiz)" class="w-full p-2 border rounded-lg" required>
+                                    <input type="url" id="resLink" placeholder="URL (Google Form/PDF Link)" class="w-full p-2 border rounded-lg" required>
+                                    <select id="resType" class="w-full p-2 border rounded-lg">
+                                        <option value="Quiz">Quiz</option>
+                                        <option value="Material">Material</option>
+                                    </select>
+                                    <button class="w-full bg-emerald-600 text-white py-2 rounded-lg font-bold">Post Resource</button>
+                                </form>
+                            </div>
+                            <div id="resourceList" class="space-y-2">
+                                </div>
+                        </div>
+                    </div>
+
+                </div>
             </div>
-        </div>
+        </main>
     </div>
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
         import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
-        import { getFirestore, collection, query, where, getDocs, doc, getDoc, addDoc, setDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+        import { getFirestore, collection, query, where, getDocs, doc, getDoc, setDoc, deleteDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
-        const firebaseConfig = {
-  apiKey: "AIzaSyBK-v8xtt7x0AA_btC0oE88IolgU9m5Q3E",
-  authDomain: "cmcsvls.firebaseapp.com",
-  projectId: "cmcsvls",
-  storageBucket: "cmcsvls.firebasestorage.app",
-  messagingSenderId: "973791112453",
-  appId: "1:973791112453:web:728b9ac51c0f3f89955b6c",
-  measurementId: "G-7KEY33ZZHE"
-};
+        const firebaseConfig = { /* YOUR CONFIG */ };
         const app = initializeApp(firebaseConfig);
         const auth = getAuth(app);
         const db = getFirestore(app);
 
-        let currentTeacherId = null;
-        let selectedClassId = null;
-        let studentsInClass = [];
+        let teacherId, selectedClassId, students = [];
 
-        onAuthStateChanged(auth, async (user) => {
-            if (!user) window.location.href = "login.html";
-            else {
-                currentTeacherId = user.uid;
-                loadTeacherClasses();
-            }
+        onAuthStateChanged(auth, u => { 
+            if(!u) window.location.href="login.html"; 
+            else { teacherId = u.uid; loadClasses(); } 
         });
 
-        // 1. Load Classes assigned to this teacher
-        async function loadTeacherClasses() {
+        // LOAD CLASSES
+        async function loadClasses() {
             const list = document.getElementById('classList');
-            const q = query(collection(db, "classes"), where("teacherId", "==", currentTeacherId));
-            const snap = await getDocs(q);
-            
+            const snap = await getDocs(query(collection(db, "classes"), where("teacherId", "==", teacherId)));
             list.innerHTML = "";
-            snap.forEach(async (classDoc) => {
-                const classData = classDoc.data();
-                const subjDoc = await getDoc(doc(db, "subjects", classData.subjectId));
-                const subjName = subjDoc.exists() ? subjDoc.data().name : "Unknown Subject";
-                
-                const li = document.createElement('li');
-                li.className = "p-3 bg-gray-50 rounded cursor-pointer hover:bg-green-50 border border-transparent hover:border-green-200 transition";
-                li.innerText = subjName;
-                li.onclick = () => selectClass(classDoc.id, subjName);
-                list.appendChild(li);
+            snap.forEach(async d => {
+                const sub = await getDoc(doc(db, "subjects", d.data().subjectId));
+                const div = document.createElement('div');
+                div.className = "p-4 bg-slate-50 rounded-xl cursor-pointer hover:bg-indigo-50 border-2 border-transparent hover:border-indigo-200 transition-all group";
+                div.innerHTML = `<h4 class="font-bold text-slate-700 group-hover:text-indigo-700">${sub.data().name}</h4><p class="text-xs text-slate-400">${d.data().schoolYear}</p>`;
+                div.onclick = () => selectClass(d.id, sub.data().name, d.data());
+                list.appendChild(div);
             });
         }
 
-        // 2. Select Class and load Students (All approved students for now)
-        async function selectClass(id, name) {
+        // SELECT CLASS
+        async function selectClass(id, name, details) {
             selectedClassId = id;
+            document.getElementById('welcomeScreen').classList.add('hidden');
+            document.getElementById('mainDashboard').classList.remove('hidden');
             document.getElementById('activeClassName').innerText = name;
-            document.getElementById('attendancePanel').classList.remove('hidden');
+            document.getElementById('activeClassDetails').innerText = `SY: ${details.schoolYear} | Sem: ${details.semester}`;
             
-            // In MVP, we fetch all active students to populate the list
-            const q = query(collection(db, "users"), where("role", "==", "student"), where("active", "==", true));
-            const snap = await getDocs(q);
-            studentsInClass = [];
-            snap.forEach(d => studentsInClass.push({ id: d.id, email: d.data().email }));
+            // Fetch Students (Names + IDs)
+            const sSnap = await getDocs(query(collection(db, "students"), where("status", "==", "enrolled")));
+            students = sSnap.docs.map(d => ({ id: d.id, ...d.data() }));
             
-            showAttendance();
+            loadAttendanceByDate();
+            loadResources();
         }
 
-        // 3. Attendance UI
-        window.showAttendance = () => {
-            let html = `<table class="w-full text-left border-collapse">
-                <thead><tr class="bg-gray-100 text-xs">
-                    <th class="p-2 border">Student</th>
-                    <th class="p-2 border">Status</th>
-                </tr></thead><tbody>`;
+        // TAB SWITCHING
+        window.switchTab = (tab) => {
+            document.querySelectorAll('.panel').forEach(p => p.classList.add('hidden'));
+            document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('bg-white', 'shadow-sm', 'text-indigo-600'));
+            document.getElementById(`panel-${tab}`).classList.remove('hidden');
+            document.getElementById(`tab-${tab}`).classList.add('bg-white', 'shadow-sm', 'text-indigo-600');
+            if(tab === 'grades') loadGrades();
+        }
+
+        // ADVANCED ATTENDANCE (Per Date + Save/Update)
+        window.loadAttendanceByDate = async () => {
+            const date = document.getElementById('attendanceDate').value || new Date().toISOString().split('T')[0];
+            document.getElementById('attendanceDate').value = date;
             
-            studentsInClass.forEach(s => {
-                html += `<tr>
-                    <td class="p-2 border text-sm">${s.email}</td>
-                    <td class="p-2 border text-sm">
-                        <select onchange="saveAttendance('${s.id}', this.value)" class="border rounded p-1">
-                            <option value="">--Mark--</option>
-                            <option value="Present">Present</option>
-                            <option value="Absent">Absent</option>
-                            <option value="Late">Late</option>
+            const container = document.getElementById('attendanceContainer');
+            container.innerHTML = `<table class="w-full">
+                <thead class="bg-slate-50 text-xs"><tr><th class="p-3">Student Name</th><th class="p-3">Status</th></tr></thead>
+                <tbody id="attBody" class="divide-y"></tbody>
+            </table>`;
+            
+            const body = document.getElementById('attBody');
+            for(let s of students) {
+                const attId = `${selectedClassId}_${s.id}_${date}`;
+                const attDoc = await getDoc(doc(db, "attendance", attId));
+                const currentStatus = attDoc.exists() ? attDoc.data().status : "";
+
+                body.innerHTML += `<tr>
+                    <td class="p-3 text-sm font-bold">${s.firstName} ${s.lastName}</td>
+                    <td class="p-3">
+                        <select onchange="saveAtt('${s.id}', this.value)" class="border rounded-md p-1 text-sm ${currentStatus ? 'bg-green-50 border-green-200' : ''}">
+                            <option value="">--Select--</option>
+                            <option value="Present" ${currentStatus=='Present'?'selected':''}>Present</option>
+                            <option value="Absent" ${currentStatus=='Absent'?'selected':''}>Absent</option>
+                            <option value="Late" ${currentStatus=='Late'?'selected':''}>Late</option>
                         </select>
                     </td>
                 </tr>`;
-            });
-            html += `</tbody></table>`;
-            document.getElementById('actionContent').innerHTML = html;
-        };
+            }
+        }
 
-        // 4. Grades UI & Conversion Logic
-        window.showGrades = () => {
-            let html = `<table class="w-full text-left border-collapse">
-                <thead><tr class="bg-gray-100 text-xs">
-                    <th class="p-2 border">Student</th>
-                    <th class="p-2 border">Numeric (0-100)</th>
-                    <th class="p-2 border">College Grade</th>
-                </tr></thead><tbody>`;
+        window.saveAtt = async (sid, status) => {
+            const date = document.getElementById('attendanceDate').value;
+            const attId = `${selectedClassId}_${sid}_${date}`;
+            await setDoc(doc(db, "attendance", attId), {
+                classId: selectedClassId, studentId: sid, date, status
+            }, { merge: true });
+        }
+
+        // ADVANCED GRADES (Auto-calc + Save/Update)
+        async function loadGrades() {
+            const container = document.getElementById('gradesContainer');
+            container.innerHTML = `<table class="w-full text-left">
+                <thead class="bg-slate-50 text-xs uppercase"><tr><th class="p-3">Student Name</th><th class="p-3">Numeric</th><th class="p-3">College Grade</th></tr></thead>
+                <tbody id="gradeBody" class="divide-y"></tbody>
+            </table>`;
             
-            studentsInClass.forEach(s => {
-                html += `<tr>
-                    <td class="p-2 border text-sm">${s.email}</td>
-                    <td class="p-2 border"><input type="number" onchange="saveGrade('${s.id}', this.value)" class="w-20 border rounded p-1 text-sm"></td>
-                    <td class="p-2 border"><span id="cg-${s.id}" class="font-bold">-</span></td>
+            const body = document.getElementById('gradeBody');
+            for(let s of students) {
+                const gId = `${selectedClassId}_${s.id}`;
+                const gDoc = await getDoc(doc(db, "grades", gId));
+                const gData = gDoc.exists() ? gDoc.data() : { numericGrade: "" };
+
+                body.innerHTML += `<tr>
+                    <td class="p-3 text-sm font-bold">${s.firstName} ${s.lastName}</td>
+                    <td class="p-3"><input type="number" value="${gData.numericGrade}" onchange="saveGrade('${s.id}', this.value)" class="border rounded p-1 w-20"></td>
+                    <td class="p-3 font-black text-indigo-600" id="cg-${s.id}">${gData.collegeGrade || '-'}</td>
                 </tr>`;
-            });
-            html += `</tbody></table>`;
-            document.getElementById('actionContent').innerHTML = html;
-        };
+            }
+        }
 
-        // Save Attendance
-        window.saveAttendance = async (studentId, status) => {
-            if (!status) return;
-            await addDoc(collection(db, "attendance"), {
+        window.saveGrade = async (sid, val) => {
+            let cg = 5.0;
+            if(val >= 75) cg = (3.0 - ((val - 75) * 0.08)).toFixed(2); // Dynamic scale example
+            if(val >= 95) cg = 1.0;
+            if(val < 75) cg = 5.0;
+
+            document.getElementById(`cg-${sid}`).innerText = cg;
+            await setDoc(doc(db, "grades", `${selectedClassId}_${sid}`), {
+                classId: selectedClassId, studentId: sid, numericGrade: val, collegeGrade: cg
+            }, { merge: true });
+        }
+
+        // RESOURCES (Links/Quizzes)
+        document.getElementById('resourceForm').onsubmit = async (e) => {
+            e.preventDefault();
+            const resData = {
                 classId: selectedClassId,
-                studentId: studentId,
-                date: new Date().toISOString().split('T')[0],
-                status: status
+                title: document.getElementById('resTitle').value,
+                url: document.getElementById('resLink').value,
+                type: document.getElementById('resType').value,
+                createdAt: new Date().toISOString()
+            };
+            await setDoc(doc(db, "resources", `${selectedClassId}_${Date.now()}`), resData);
+            document.getElementById('resourceForm').reset();
+            loadResources();
+        }
+
+        async function loadResources() {
+            const list = document.getElementById('resourceList');
+            const snap = await getDocs(query(collection(db, "resources"), where("classId", "==", selectedClassId)));
+            list.innerHTML = `<h4 class="text-xs font-bold text-slate-400 uppercase">Existing Resources</h4>`;
+            snap.forEach(d => {
+                list.innerHTML += `<div class="p-3 bg-slate-50 rounded-lg flex justify-between items-center text-sm">
+                    <span><b>[${d.data().type}]</b> ${d.data().title}</span>
+                    <a href="${d.data().url}" target="_blank" class="text-indigo-600 hover:underline">Open</a>
+                </div>`;
             });
-            console.log("Attendance Saved");
-        };
-
-        // Save Grade + Conversion
-        window.saveGrade = async (studentId, num) => {
-            let cg = 5.0; // Default Fail
-            if (num >= 95) cg = 1.0;
-            else if (num >= 90) cg = 1.5;
-            else if (num >= 85) cg = 2.0;
-            else if (num >= 80) cg = 2.5;
-            else if (num >= 75) cg = 3.0;
-
-            document.getElementById(`cg-${studentId}`).innerText = cg.toFixed(2);
-
-            await addDoc(collection(db, "grades"), {
-                studentId: studentId,
-                classId: selectedClassId,
-                numericGrade: num,
-                collegeGrade: cg,
-                remarks: cg <= 3.0 ? "Passed" : "Failed"
-            });
-        };
+        }
 
         document.getElementById('logoutBtn').onclick = () => signOut(auth);
     </script>
