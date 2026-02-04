@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SVLS - Student Enrollment</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-50 p-6">
+
+    <div class="max-w-2xl mx-auto bg-white p-8 rounded-lg shadow-lg">
+        <h2 class="text-3xl font-bold text-gray-800 mb-2">Student Enrollment</h2>
+        <p class="text-gray-600 mb-8">Fill out the form below to apply for enrollment. Your account will require admin approval.</p>
+
+        <form id="enrollmentForm" class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div class="md:col-span-2 border-b pb-2 mb-2">
+                <h3 class="font-semibold text-blue-600">Account Credentials</h3>
+            </div>
+            <div>
+                <label class="block text-sm font-medium">Email</label>
+                <input type="email" id="email" required class="w-full p-2 border rounded focus:ring-2 focus:ring-blue-400 outline-none">
+            </div>
+            <div>
+                <label class="block text-sm font-medium">Password</label>
+                <input type="password" id="password" required class="w-full p-2 border rounded focus:ring-2 focus:ring-blue-400 outline-none">
+            </div>
+
+            <div class="md:col-span-2 border-b pb-2 mt-4 mb-2">
+                <h3 class="font-semibold text-blue-600">Personal Information</h3>
+            </div>
+            <div>
+                <label class="block text-sm font-medium">First Name</label>
+                <input type="text" id="firstName" required class="w-full p-2 border rounded focus:ring-2 focus:ring-blue-400 outline-none">
+            </div>
+            <div>
+                <label class="block text-sm font-medium">Last Name</label>
+                <input type="text" id="lastName" required class="w-full p-2 border rounded focus:ring-2 focus:ring-blue-400 outline-none">
+            </div>
+            <div>
+                <label class="block text-sm font-medium">Student ID (Temporary)</label>
+                <input type="text" id="studentId" required class="w-full p-2 border rounded focus:ring-2 focus:ring-blue-400 outline-none">
+            </div>
+            <div>
+                <label class="block text-sm font-medium">Gender</label>
+                <select id="gender" class="w-full p-2 border rounded focus:ring-2 focus:ring-blue-400 outline-none">
+                    <option value="Male">Male</option>
+                    <option value="Female">Female</option>
+                    <option value="Other">Other</option>
+                </select>
+            </div>
+            <div>
+                <label class="block text-sm font-medium">Birthday</label>
+                <input type="date" id="birthday" required class="w-full p-2 border rounded focus:ring-2 focus:ring-blue-400 outline-none">
+            </div>
+
+            <div class="md:col-span-2 border-b pb-2 mt-4 mb-2">
+                <h3 class="font-semibold text-blue-600">Academic Details</h3>
+            </div>
+            <div>
+                <label class="block text-sm font-medium">Course</label>
+                <select id="course" class="w-full p-2 border rounded focus:ring-2 focus:ring-blue-400 outline-none">
+                    <option value="BSTI">BSTI</option>
+                    <option value="ACT">ACT</option>
+                </select>
+            </div>
+            <div>
+                <label class="block text-sm font-medium">Year Level</label>
+                <select id="yearLevel" class="w-full p-2 border rounded focus:ring-2 focus:ring-blue-400 outline-none">
+                    <option value="1">1st Year</option>
+                    <option value="2">2nd Year</option>
+                    <option value="3">3rd Year</option>
+                    <option value="4">4th Year</option>
+                </select>
+            </div>
+
+            <div class="md:col-span-2 mt-6">
+                <button type="submit" class="w-full bg-blue-600 text-white py-3 rounded-lg font-bold hover:bg-blue-700 transition">Submit Application</button>
+            </div>
+        </form>
+        <div id="message" class="mt-4 text-center"></div>
+    </div>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+        import { getAuth, createUserWithEmailAndPassword, signOut } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+        import { getFirestore, doc, setDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+
+const firebaseConfig = {
+  apiKey: "AIzaSyBK-v8xtt7x0AA_btC0oE88IolgU9m5Q3E",
+  authDomain: "cmcsvls.firebaseapp.com",
+  projectId: "cmcsvls",
+  storageBucket: "cmcsvls.firebasestorage.app",
+  messagingSenderId: "973791112453",
+  appId: "1:973791112453:web:728b9ac51c0f3f89955b6c",
+  measurementId: "G-7KEY33ZZHE"
+};
+
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const db = getFirestore(app);
+
+        const form = document.getElementById('enrollmentForm');
+        const messageDiv = document.getElementById('message');
+
+        form.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            messageDiv.innerText = "Submitting application...";
+
+            const email = document.getElementById('email').value;
+            const password = document.getElementById('password').value;
+            const firstName = document.getElementById('firstName').value;
+            const lastName = document.getElementById('lastName').value;
+            const studentId = document.getElementById('studentId').value;
+            const gender = document.getElementById('gender').value;
+            const birthday = document.getElementById('birthday').value;
+            const course = document.getElementById('course').value;
+            const yearLevel = document.getElementById('yearLevel').value;
+
+            try {
+                // 1. Create User in Auth
+                const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+                const user = userCredential.user;
+
+                // 2. Create entry in 'users' collection (for role-based access)
+                await setDoc(doc(db, "users", user.uid), {
+                    email: email,
+                    role: "student",
+                    active: false // Inactive until SuperAdmin approves
+                });
+
+                // 3. Create entry in 'students' collection (for profile info)
+                await setDoc(doc(db, "students", studentId), {
+                    uid: user.uid,
+                    firstName: firstName,
+                    lastName: lastName,
+                    course: course,
+                    yearLevel: yearLevel,
+                    gender: gender,
+                    birthday: birthday,
+                    verified: false,
+                    status: "enrolled",
+                    createdAt: new Date().toISOString()
+                });
+
+                // 4. Force Sign Out (so they don't automatically enter the dashboard)
+                await signOut(auth);
+
+                messageDiv.className = "mt-4 text-green-600 font-bold";
+                messageDiv.innerText = "Application submitted! Please wait for admin approval before logging in.";
+                form.reset();
+
+            } catch (error) {
+                messageDiv.className = "mt-4 text-red-600 font-bold";
+                messageDiv.innerText = "Error: " + error.message;
+            }
+        });
+    </script>
+</body>
+</html>
