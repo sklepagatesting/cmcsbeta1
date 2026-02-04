@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SVLS - Login</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-100 flex items-center justify-center h-screen">
+
+    <div class="bg-white p-8 rounded-xl shadow-lg w-full max-w-md">
+        <div class="text-center mb-8">
+            <h2 class="text-3xl font-bold text-blue-600">SVLS Portal</h2>
+            <p class="text-gray-500">Sign in to your account</p>
+        </div>
+
+        <form id="loginForm" class="space-y-5">
+            <div>
+                <label class="block text-sm font-medium text-gray-700">Email Address</label>
+                <input type="email" id="email" required class="w-full p-3 border border-gray-300 rounded-lg mt-1 focus:ring-2 focus:ring-blue-500 outline-none transition">
+            </div>
+            <div>
+                <label class="block text-sm font-medium text-gray-700">Password</label>
+                <input type="password" id="password" required class="w-full p-3 border border-gray-300 rounded-lg mt-1 focus:ring-2 focus:ring-blue-500 outline-none transition">
+            </div>
+            
+            <button type="submit" class="w-full bg-blue-600 text-white py-3 rounded-lg font-semibold hover:bg-blue-700 transition transform active:scale-95">
+                Login
+            </button>
+        </form>
+
+        <div id="message" class="mt-6 text-sm text-center font-medium"></div>
+
+        <div class="mt-8 border-t pt-4 text-center">
+            <p class="text-gray-600 text-sm">New student? <a href="enroll.html" class="text-blue-600 hover:underline font-bold">Enroll here</a></p>
+        </div>
+    </div>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+        import { getAuth, signInWithEmailAndPassword, signOut } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+        import { getFirestore, doc, getDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+
+const firebaseConfig = {
+  apiKey: "AIzaSyBK-v8xtt7x0AA_btC0oE88IolgU9m5Q3E",
+  authDomain: "cmcsvls.firebaseapp.com",
+  projectId: "cmcsvls",
+  storageBucket: "cmcsvls.firebasestorage.app",
+  messagingSenderId: "973791112453",
+  appId: "1:973791112453:web:728b9ac51c0f3f89955b6c",
+  measurementId: "G-7KEY33ZZHE"
+};
+
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const db = getFirestore(app);
+
+        const loginForm = document.getElementById('loginForm');
+        const messageDiv = document.getElementById('message');
+
+        loginForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            messageDiv.className = "mt-6 text-sm text-center text-blue-600";
+            messageDiv.innerText = "Verifying credentials...";
+
+            const email = document.getElementById('email').value;
+            const password = document.getElementById('password').value;
+
+            try {
+                // 1. Sign in to Firebase Auth
+                const userCredential = await signInWithEmailAndPassword(auth, email, password);
+                const user = userCredential.user;
+
+                // 2. Fetch User Role and Status from Firestore
+                const userDoc = await getDoc(doc(db, "users", user.uid));
+
+                if (userDoc.exists()) {
+                    const userData = userDoc.data();
+
+                    // 3. Check if account is active (Important for Students)
+                    if (userData.active === false) {
+                        messageDiv.className = "mt-6 text-sm text-center text-red-600";
+                        messageDiv.innerText = "Your account is pending approval by the Admin.";
+                        await signOut(auth); // Boot them out
+                        return;
+                    }
+
+                    // 4. Role-based Redirection
+                    messageDiv.className = "mt-6 text-sm text-center text-green-600";
+                    messageDiv.innerText = "Access granted! Redirecting...";
+
+                    setTimeout(() => {
+                        if (userData.role === 'superadmin') {
+                            window.location.href = "admin-dashboard.html";
+                        } else if (userData.role === 'teacher') {
+                            window.location.href = "teacher-dashboard.html";
+                        } else if (userData.role === 'student') {
+                            window.location.href = "student-dashboard.html";
+                        } else {
+                            messageDiv.innerText = "Error: Role not recognized.";
+                        }
+                    }, 1500);
+
+                } else {
+                    throw new Error("User record not found in database.");
+                }
+
+            } catch (error) {
+                messageDiv.className = "mt-6 text-sm text-center text-red-600";
+                messageDiv.innerText = "Login failed: " + error.message;
+            }
+        });
+    </script>
+</body>
+</html>
