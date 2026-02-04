@@ -3,119 +3,162 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>SVLS | Admin Command Core</title>
+    <title>SVLS | Unified Admin Command</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <style>
-        .sidebar-link.active { background: #1e40af; border-right: 4px solid #fbbf24; color: white; }
+        .sidebar-link.active { background: #1e40af; border-left: 4px solid #fbbf24; color: white; }
         .tab-content { display: none; }
         .tab-content.active { display: block; }
-        .scroll-custom::-webkit-scrollbar { width: 5px; }
-        .scroll-custom::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
+        .glass { background: rgba(255, 255, 255, 0.95); backdrop-filter: blur(10px); }
     </style>
 </head>
-<body class="bg-slate-50 min-h-screen flex font-sans text-slate-900">
+<body class="bg-slate-100 min-h-screen flex font-sans">
 
     <aside class="w-72 bg-blue-950 text-slate-300 flex-shrink-0 flex flex-col sticky top-0 h-screen shadow-2xl z-50">
         <div class="p-8 border-b border-blue-900">
-            <h1 class="text-2xl font-black tracking-tighter text-white italic">SVLS <span class="text-blue-400">PRO</span></h1>
-            <p id="adminEmail" class="text-[10px] font-bold uppercase tracking-widest text-blue-500 mt-2 truncate">Admin Control</p>
+            <h1 class="text-2xl font-black tracking-tighter text-white italic">SVLS <span class="text-blue-400">CORE</span></h1>
+            <p id="adminEmail" class="text-[10px] font-bold uppercase tracking-widest text-blue-500 mt-2 truncate">System Admin</p>
         </div>
-        <nav class="flex-1 mt-6 overflow-y-auto scroll-custom">
-            <button onclick="showTab('academic')" class="sidebar-link active w-full flex items-center gap-4 px-8 py-4 transition-all hover:text-white">
-                <i class="fas fa-university"></i> <span class="text-xs font-black uppercase">Academic Setup</span>
+        <nav class="flex-1 mt-4 overflow-y-auto">
+            <button onclick="showTab('approvals')" class="sidebar-link active w-full flex items-center gap-4 px-8 py-4 transition-all hover:bg-blue-900/50">
+                <i class="fas fa-check-circle"></i> <span class="text-xs font-black uppercase">1. Approvals</span>
             </button>
-            <button onclick="showTab('assignments')" class="sidebar-link w-full flex items-center gap-4 px-8 py-4 transition-all hover:text-white">
-                <i class="fas fa-link"></i> <span class="text-xs font-black uppercase">Enrollments & Linking</span>
+            <button onclick="showTab('academic')" class="sidebar-link w-full flex items-center gap-4 px-8 py-4 transition-all hover:bg-blue-900/50">
+                <i class="fas fa-university"></i> <span class="text-xs font-black uppercase">2. Academic Setup</span>
             </button>
-            <button onclick="showTab('records')" class="sidebar-link w-full flex items-center gap-4 px-8 py-4 transition-all hover:text-white">
-                <i class="fas fa-database"></i> <span class="text-xs font-black uppercase">Master Records</span>
+            <button onclick="showTab('class-assign')" class="sidebar-link w-full flex items-center gap-4 px-8 py-4 transition-all hover:bg-blue-900/50">
+                <i class="fas fa-users-cog"></i> <span class="text-xs font-black uppercase">3. Class Assignment</span>
+            </button>
+            <button onclick="showTab('records')" class="sidebar-link w-full flex items-center gap-4 px-8 py-4 transition-all hover:bg-blue-900/50">
+                <i class="fas fa-folder-open"></i> <span class="text-xs font-black uppercase">4. Records & Search</span>
+            </button>
+            <button onclick="showTab('comms')" class="sidebar-link w-full flex items-center gap-4 px-8 py-4 transition-all hover:bg-blue-900/50">
+                <i class="fas fa-bullhorn"></i> <span class="text-xs font-black uppercase">5. Teacher Comms</span>
             </button>
         </nav>
         <div class="p-6 border-t border-blue-900">
-            <button onclick="auth.signOut()" class="w-full bg-rose-600 hover:bg-rose-700 text-white py-3 rounded-xl font-black text-[10px] uppercase transition-all">Logout</button>
+            <button onclick="auth.signOut()" class="w-full bg-rose-600 hover:bg-rose-700 text-white py-3 rounded-xl font-black text-[10px] uppercase shadow-lg transition-all">Logout System</button>
         </div>
     </aside>
 
-    <main class="flex-1 overflow-y-auto">
+    <main class="flex-1 overflow-y-auto pb-20">
         <header class="bg-white/80 backdrop-blur-md border-b p-6 flex justify-between items-center sticky top-0 z-40">
-            <h2 id="tabTitle" class="text-sm font-black text-slate-400 uppercase tracking-widest">Academic Setup</h2>
+            <h2 id="tabTitle" class="text-sm font-black text-slate-400 uppercase tracking-widest italic">Approvals</h2>
+            <div class="flex items-center gap-3 bg-emerald-50 px-4 py-2 rounded-full">
+                <span class="h-2 w-2 bg-emerald-500 rounded-full animate-pulse"></span>
+                <span class="text-[10px] font-black text-emerald-700 uppercase">Server Active</span>
+            </div>
         </header>
 
         <div class="p-8 max-w-7xl mx-auto space-y-12">
-            
-            <section id="academic" class="tab-content active space-y-10">
+
+            <section id="approvals" class="tab-content active space-y-6">
+                <div class="bg-white rounded-[2rem] shadow-xl border overflow-hidden">
+                    <div class="p-6 bg-slate-50 border-b flex justify-between items-center">
+                        <span class="text-xs font-black text-slate-500 uppercase">Review Pending Access Requests</span>
+                    </div>
+                    <table class="w-full text-left">
+                        <thead class="bg-slate-50 text-[10px] font-black uppercase text-slate-400 border-b">
+                            <tr><th class="p-6">User Identity</th><th class="p-6">Requested Role</th><th class="p-6 text-right">Action</th></tr>
+                        </thead>
+                        <tbody id="pendingTable" class="divide-y divide-slate-100"></tbody>
+                    </table>
+                </div>
+            </section>
+
+            <section id="academic" class="tab-content space-y-8">
                 <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
-                    <div class="bg-white p-8 rounded-3xl border shadow-sm">
-                        <h3 class="font-black text-blue-900 mb-6 uppercase text-xs tracking-widest border-b pb-2">Course Definition</h3>
+                    <div class="bg-white p-8 rounded-[2rem] border shadow-sm">
+                        <h3 class="text-xs font-black text-blue-900 mb-6 uppercase tracking-widest border-b pb-4">Define Course</h3>
                         <form id="courseForm" class="space-y-4">
-                            <input type="text" id="courseName" placeholder="Course Name (e.g., BS Information Technology)" class="w-full p-4 bg-slate-50 rounded-2xl font-bold border-none outline-blue-600" required>
-                            <input type="number" id="courseDuration" placeholder="Duration (Total Years)" class="w-full p-4 bg-slate-50 rounded-2xl font-bold border-none outline-blue-600" required>
-                            <button class="w-full bg-blue-600 text-white py-4 rounded-2xl font-black text-xs uppercase shadow-lg">Save Course</button>
+                            <input type="text" id="courseName" placeholder="Course Code/Name (e.g., BSIT)" class="w-full p-4 bg-slate-50 rounded-2xl font-bold outline-blue-600 border-none" required>
+                            <input type="number" id="courseDuration" placeholder="Course Duration (Years)" class="w-full p-4 bg-slate-50 rounded-2xl font-bold outline-blue-600 border-none" required>
+                            <button class="w-full bg-blue-600 text-white py-4 rounded-2xl font-black text-xs uppercase shadow-xl hover:bg-blue-700">Save Course</button>
                         </form>
                     </div>
-                    <div class="bg-white p-8 rounded-3xl border shadow-sm">
-                        <h3 class="font-black text-blue-900 mb-6 uppercase text-xs tracking-widest border-b pb-2">Subject Detail</h3>
+                    <div class="bg-white p-8 rounded-[2rem] border shadow-sm">
+                        <h3 class="text-xs font-black text-blue-900 mb-6 uppercase tracking-widest border-b pb-4">Register Subject</h3>
                         <form id="subjectForm" class="space-y-4">
-                            <input type="text" id="subjName" placeholder="Subject Name" class="w-full p-4 bg-slate-50 rounded-2xl font-bold border-none outline-blue-600" required>
-                            <select id="subjCourse" class="w-full p-4 bg-slate-50 rounded-2xl font-bold border-none outline-blue-600" required></select>
+                            <input type="text" id="subjName" placeholder="Subject Name" class="w-full p-4 bg-slate-50 rounded-2xl font-bold outline-blue-600 border-none" required>
+                            <select id="subjCourse" class="w-full p-4 bg-slate-50 rounded-2xl font-bold outline-blue-600 border-none" required></select>
                             <div class="grid grid-cols-2 gap-4">
                                 <select id="subjSem" class="p-4 bg-slate-50 rounded-2xl font-bold border-none outline-blue-600">
                                     <option value="1">1st Semester</option><option value="2">2nd Semester</option>
                                 </select>
                                 <select id="subjTeacher" class="p-4 bg-slate-50 rounded-2xl font-bold border-none outline-blue-600" required></select>
                             </div>
-                            <button class="w-full bg-indigo-600 text-white py-4 rounded-2xl font-black text-xs uppercase shadow-lg">Register Subject</button>
+                            <button class="w-full bg-indigo-600 text-white py-4 rounded-2xl font-black text-xs uppercase shadow-xl hover:bg-indigo-700">Add Subject & Link Teacher</button>
                         </form>
                     </div>
                 </div>
             </section>
 
-            <section id="assignments" class="tab-content space-y-10">
-                <div class="bg-white p-8 rounded-3xl border shadow-sm">
-                    <h3 class="font-black text-emerald-700 mb-6 uppercase text-xs tracking-widest">Enroll Student to Course & Subject</h3>
-                    <form id="enrollForm" class="grid grid-cols-1 md:grid-cols-3 gap-6">
-                        <select id="enrollStudent" class="p-4 bg-slate-50 rounded-2xl font-bold border-none outline-emerald-600" required></select>
-                        <select id="enrollCourse" class="p-4 bg-slate-50 rounded-2xl font-bold border-none outline-emerald-600" required></select>
-                        <select id="enrollSubject" class="p-4 bg-slate-50 rounded-2xl font-bold border-none outline-emerald-600" required></select>
-                        <button class="md:col-span-3 bg-emerald-600 text-white py-4 rounded-2xl font-black text-xs uppercase shadow-xl hover:bg-emerald-700">Finalize Enrollment</button>
+            <section id="class-assign" class="tab-content space-y-8">
+                <div class="bg-blue-900 p-10 rounded-[2.5rem] shadow-2xl text-white">
+                    <h3 class="font-black text-xl mb-6 uppercase italic tracking-tighter">Assign Students to Course/Subjects</h3>
+                    <form id="enrollForm" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                        <select id="enrollStudent" class="p-4 bg-white/10 rounded-2xl font-bold outline-none text-white" required></select>
+                        <select id="enrollCourse" class="p-4 bg-white/10 rounded-2xl font-bold outline-none text-white" required></select>
+                        <select id="enrollSubject" class="p-4 bg-white/10 rounded-2xl font-bold outline-none text-white" required></select>
+                        <button class="bg-emerald-500 text-white py-4 rounded-2xl font-black text-xs uppercase shadow-xl hover:bg-emerald-400">Finalize Link</button>
                     </form>
                 </div>
             </section>
 
             <section id="records" class="tab-content space-y-10">
-                <div class="space-y-6">
-                    <h4 class="font-black text-xs uppercase text-slate-400 tracking-widest">Courses Management</h4>
-                    <div class="bg-white rounded-3xl border overflow-hidden">
+                <div class="flex flex-col md:flex-row gap-4 mb-4">
+                    <div class="relative flex-1">
+                        <i class="fas fa-search absolute left-5 top-5 text-slate-400"></i>
+                        <input type="text" id="searchBox" onkeyup="filterRecords()" placeholder="Search anything (Student, Subject, Teacher)..." class="w-full p-4 pl-14 bg-white rounded-2xl shadow-sm border-none font-bold outline-blue-600">
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 xl:grid-cols-2 gap-8">
+                    <div class="bg-white rounded-[2rem] border overflow-hidden shadow-sm">
+                        <div class="p-5 bg-slate-50 border-b font-black text-[10px] text-slate-400 uppercase">Courses Master List</div>
                         <table class="w-full text-left">
-                            <thead class="bg-slate-50 text-[10px] uppercase font-bold text-slate-400 border-b">
-                                <tr><th class="p-4">Course</th><th class="p-4">Duration</th><th class="p-4 text-right">Actions</th></tr>
-                            </thead>
-                            <tbody id="courseMaster" class="divide-y"></tbody>
+                            <tbody id="courseList" class="divide-y divide-slate-50"></tbody>
+                        </table>
+                    </div>
+                    <div class="bg-white rounded-[2rem] border overflow-hidden shadow-sm">
+                        <div class="p-5 bg-slate-50 border-b font-black text-[10px] text-slate-400 uppercase">Subjects Master List</div>
+                        <table class="w-full text-left">
+                            <tbody id="subjectList" class="divide-y divide-slate-50"></tbody>
                         </table>
                     </div>
                 </div>
 
-                <div class="space-y-6">
-                    <h4 class="font-black text-xs uppercase text-slate-400 tracking-widest">Subjects & Faculty Assignment</h4>
-                    <div class="bg-white rounded-3xl border overflow-hidden">
-                        <table class="w-full text-left">
-                            <thead class="bg-slate-50 text-[10px] uppercase font-bold text-slate-400 border-b">
-                                <tr><th class="p-4">Subject</th><th class="p-4">Teacher</th><th class="p-4">Semester</th><th class="p-4 text-right">Actions</th></tr>
-                            </thead>
-                            <tbody id="subjectMaster" class="divide-y"></tbody>
-                        </table>
-                    </div>
+                <div class="bg-white rounded-[2rem] border overflow-hidden shadow-sm">
+                    <div class="p-5 bg-indigo-50 border-b font-black text-[10px] text-indigo-400 uppercase text-center tracking-widest">Active Enrollments / Student Records</div>
+                    <table class="w-full text-left">
+                        <thead class="text-[10px] font-black uppercase text-slate-400 border-b bg-slate-50">
+                            <tr><th class="p-5">Student</th><th class="p-5">Course</th><th class="p-5">Subject</th><th class="p-5 text-right">Actions</th></tr>
+                        </thead>
+                        <tbody id="enrollmentTable" class="divide-y divide-slate-50"></tbody>
+                    </table>
                 </div>
             </section>
 
+            <section id="comms" class="tab-content">
+                <div class="bg-white p-10 rounded-[3rem] border shadow-sm max-w-3xl mx-auto">
+                    <h3 class="font-black text-slate-800 text-lg mb-6 flex items-center gap-3">
+                        <i class="fas fa-paper-plane text-blue-600"></i> Global Teacher Announcement
+                    </h3>
+                    <form id="noteForm" class="space-y-4">
+                        <select id="noteTeacher" class="w-full p-4 bg-slate-50 rounded-2xl font-bold border-none outline-blue-600" required></select>
+                        <textarea id="noteText" placeholder="Write message to faculty..." class="w-full p-6 bg-slate-50 rounded-3xl outline-blue-600 h-40 font-medium border-none shadow-inner"></textarea>
+                        <button class="w-full bg-blue-900 text-white py-5 rounded-2xl font-black text-xs uppercase shadow-2xl hover:bg-blue-800 transition-all">Send Note</button>
+                    </form>
+                </div>
+            </section>
         </div>
     </main>
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
         import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
-        import { getFirestore, collection, getDocs, doc, setDoc, addDoc, deleteDoc, updateDoc, getDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+        import { getFirestore, collection, query, where, getDocs, doc, updateDoc, setDoc, addDoc, deleteDoc, getDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
         const firebaseConfig = { 
             apiKey: "AIzaSyBK-v8xtt7x0AA_btC0oE88IolgU9m5Q3E", 
@@ -130,51 +173,76 @@
         const auth = getAuth(app);
         const db = getFirestore(app);
 
-        // UI Handlers
+        // --- NAVIGATION ---
         window.showTab = (tab) => {
             document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
             document.querySelectorAll('.sidebar-link').forEach(l => l.classList.remove('active'));
             document.getElementById(tab).classList.add('active');
             event.currentTarget.classList.add('active');
-            document.getElementById('tabTitle').innerText = tab.replace(/^\w/, c => c.toUpperCase());
+            document.getElementById('tabTitle').innerText = tab.replace('-', ' ').toUpperCase();
             refreshAll();
         };
 
-        // Core Functions
         async function refreshAll() {
+            loadPending();
             loadDropdowns();
-            loadMasterData();
+            loadMasterRecords();
+            loadEnrollments();
         }
 
+        // 1. APPROVAL LOGIC
+        async function loadPending() {
+            const table = document.getElementById('pendingTable');
+            table.innerHTML = "";
+            const q = query(collection(db, "users"), where("active", "==", false));
+            const snap = await getDocs(q);
+            snap.forEach(d => {
+                table.innerHTML += `<tr class="hover:bg-slate-50">
+                    <td class="p-6">
+                        <div class="font-bold text-slate-800">${d.data().email}</div>
+                        <div class="text-[10px] text-slate-400 uppercase font-black">${d.data().name || 'New User'}</div>
+                    </td>
+                    <td class="p-6"><span class="px-3 py-1 bg-blue-100 text-blue-600 rounded-full text-[10px] font-black uppercase">${d.data().role}</span></td>
+                    <td class="p-6 text-right">
+                        <button onclick="approveUser('${d.id}', '${d.data().role}', '${d.data().name || d.data().email}')" class="bg-blue-600 text-white px-5 py-2 rounded-full font-black text-[10px] uppercase shadow-lg shadow-blue-100">Grant Access</button>
+                    </td>
+                </tr>`;
+            });
+        }
+
+        window.approveUser = async (id, role, name) => {
+            await updateDoc(doc(db, "users", id), { active: true });
+            if(role === 'teacher') await setDoc(doc(db, "teachers", id), { name, email: name });
+            refreshAll();
+        };
+
+        // 2. ACADEMIC & DROPDOWNS
         async function loadDropdowns() {
             const courses = await getDocs(collection(db, "courses"));
             const teachers = await getDocs(collection(db, "teachers"));
-            const students = await getDocs(collection(db, "users")); // Filtered student role in UI
+            const students = await getDocs(query(collection(db, "users"), where("role", "==", "student"), where("active", "==", true)));
             const subjects = await getDocs(collection(db, "subjects"));
 
-            const fill = (id, snap, type) => {
+            const fill = (id, snap) => {
                 const el = document.getElementById(id);
-                el.innerHTML = '<option value="">Select Option</option>';
-                snap.forEach(d => {
-                    const data = d.data();
-                    if(type === 'student' && data.role !== 'student') return;
-                    el.innerHTML += `<option value="${d.id}">${data.name || data.email}</option>`;
-                });
+                el.innerHTML = '<option value="">Select...</option>';
+                snap.forEach(d => el.innerHTML += `<option value="${d.id}">${d.data().name || d.data().email}</option>`);
             };
 
             fill('subjCourse', courses);
             fill('subjTeacher', teachers);
+            fill('enrollStudent', students);
             fill('enrollCourse', courses);
-            fill('enrollStudent', students, 'student');
             fill('enrollSubject', subjects);
+            fill('noteTeacher', teachers);
         }
 
-        // --- ADD/UPDATE DATA ---
         document.getElementById('courseForm').onsubmit = async (e) => {
             e.preventDefault();
-            const name = document.getElementById('courseName').value;
-            const years = document.getElementById('courseDuration').value;
-            await addDoc(collection(db, "courses"), { name, duration: years });
+            await addDoc(collection(db, "courses"), { 
+                name: document.getElementById('courseName').value, 
+                duration: document.getElementById('courseDuration').value 
+            });
             e.target.reset(); refreshAll();
         };
 
@@ -189,66 +257,98 @@
             e.target.reset(); refreshAll();
         };
 
+        // 3. ENROLLMENT (STUDENT TO COURSE & SUBJECT)
         document.getElementById('enrollForm').onsubmit = async (e) => {
             e.preventDefault();
-            const sid = document.getElementById('enrollStudent').value;
-            const cid = document.getElementById('enrollCourse').value;
-            const subid = document.getElementById('enrollSubject').value;
-            
-            // Link student to their academic profile
-            await setDoc(doc(db, "enrollments", `${sid}_${subid}`), {
-                studentId: sid, courseId: cid, subjectId: subid, date: new Date()
+            const sId = document.getElementById('enrollStudent').value;
+            const cId = document.getElementById('enrollCourse').value;
+            const subId = document.getElementById('enrollSubject').value;
+
+            await setDoc(doc(db, "enrollments", `${sId}_${subId}`), {
+                studentId: sId, courseId: cId, subjectId: subId, enrollmentDate: new Date().toISOString()
             });
-            alert("Enrollment Successful");
+            alert("Record Linked Successfully"); refreshAll();
         };
 
-        // --- MASTER RECORD LOADING & UPDATE ---
-        async function loadMasterData() {
-            const courseList = document.getElementById('courseMaster');
-            const subjectList = document.getElementById('subjectMaster');
-            courseList.innerHTML = ""; subjectList.innerHTML = "";
+        // 4. MASTER RECORDS & UPDATES
+        async function loadMasterRecords() {
+            const cList = document.getElementById('courseList');
+            const sList = document.getElementById('subjectList');
+            cList.innerHTML = ""; sList.innerHTML = "";
 
             const courses = await getDocs(collection(db, "courses"));
             courses.forEach(d => {
-                courseList.innerHTML += `<tr>
-                    <td class="p-4 font-bold">${d.data().name}</td>
-                    <td class="p-4 text-xs font-black text-blue-600">${d.data().duration} Years</td>
+                cList.innerHTML += `<tr class="record-row" data-val="${d.data().name}">
+                    <td class="p-4 font-bold text-xs uppercase">${d.data().name} <span class="text-blue-500 ml-2">(${d.data().duration}y)</span></td>
                     <td class="p-4 text-right">
-                        <button onclick="updateData('courses', '${d.id}', 'name')" class="text-blue-500 mr-4 text-xs font-bold">Edit</button>
-                        <button onclick="deleteData('courses', '${d.id}')" class="text-rose-500 text-xs font-bold">Delete</button>
+                        <button onclick="updateRec('courses', '${d.id}', 'name')" class="text-blue-400 hover:text-blue-600 mr-3"><i class="fas fa-edit"></i></button>
+                        <button onclick="deleteRec('courses', '${d.id}')" class="text-rose-400 hover:text-rose-600"><i class="fas fa-trash"></i></button>
                     </td>
                 </tr>`;
             });
 
             const subjects = await getDocs(collection(db, "subjects"));
-            for (const d of subjects.docs) {
+            for(const d of subjects.docs) {
                 const tea = await getDoc(doc(db, "teachers", d.data().teacherId));
-                subjectList.innerHTML += `<tr>
-                    <td class="p-4 font-bold">${d.data().name}</td>
-                    <td class="p-4 text-xs font-bold text-slate-500">${tea.exists() ? tea.data().name : 'Unassigned'}</td>
-                    <td class="p-4 font-black text-indigo-500 text-[10px]">Sem ${d.data().semester}</td>
+                sList.innerHTML += `<tr class="record-row" data-val="${d.data().name}">
+                    <td class="p-4">
+                        <div class="font-bold text-xs uppercase">${d.data().name}</div>
+                        <div class="text-[9px] font-black text-slate-400 uppercase italic">Faculty: ${tea.exists() ? tea.data().name : 'N/A'} (Sem ${d.data().semester})</div>
+                    </td>
                     <td class="p-4 text-right">
-                        <button onclick="updateData('subjects', '${d.id}', 'name')" class="text-blue-500 mr-4 text-xs font-bold">Rename</button>
-                        <button onclick="deleteData('subjects', '${d.id}')" class="text-rose-500 text-xs font-bold">Delete</button>
+                        <button onclick="updateRec('subjects', '${d.id}', 'name')" class="text-blue-400 mr-3"><i class="fas fa-edit"></i></button>
+                        <button onclick="deleteRec('subjects', '${d.id}')" class="text-rose-400"><i class="fas fa-trash"></i></button>
                     </td>
                 </tr>`;
             }
         }
 
-        window.updateData = async (col, id, field) => {
-            const newVal = prompt("Enter new value:");
-            if(newVal) {
-                await updateDoc(doc(db, col, id), { [field]: newVal });
-                refreshAll();
+        async function loadEnrollments() {
+            const table = document.getElementById('enrollmentTable');
+            table.innerHTML = "";
+            const snap = await getDocs(collection(db, "enrollments"));
+            for(const d of snap.docs) {
+                const stu = await getDoc(doc(db, "users", d.data().studentId));
+                const crs = await getDoc(doc(db, "courses", d.data().courseId));
+                const sub = await getDoc(doc(db, "subjects", d.data().subjectId));
+                
+                table.innerHTML += `<tr class="record-row" data-val="${stu.data()?.name} ${sub.data()?.name}">
+                    <td class="p-5 font-bold text-slate-700">${stu.data()?.name || 'Missing User'}</td>
+                    <td class="p-5 font-black text-[10px] text-blue-600 uppercase">${crs.data()?.name || 'N/A'}</td>
+                    <td class="p-5 font-black text-[10px] text-indigo-600 uppercase">${sub.data()?.name || 'N/A'}</td>
+                    <td class="p-5 text-right"><button onclick="deleteRec('enrollments', '${d.id}')" class="text-rose-500 font-black text-[10px]">UNLINK</button></td>
+                </tr>`;
             }
+        }
+
+        window.updateRec = async (col, id, field) => {
+            const val = prompt("Enter new value:");
+            if(val) { await updateDoc(doc(db, col, id), { [field]: val }); refreshAll(); }
         };
 
-        window.deleteData = async (col, id) => {
-            if(confirm("Are you sure?")) { await deleteDoc(doc(db, col, id)); refreshAll(); }
+        window.deleteRec = async (col, id) => {
+            if(confirm("Confirm deletion? This cannot be undone.")) { await deleteDoc(doc(db, col, id)); refreshAll(); }
+        };
+
+        window.filterRecords = () => {
+            const q = document.getElementById('searchBox').value.toLowerCase();
+            document.querySelectorAll('.record-row').forEach(r => {
+                r.style.display = r.getAttribute('data-val').toLowerCase().includes(q) ? '' : 'none';
+            });
+        };
+
+        // 5. COMMS
+        document.getElementById('noteForm').onsubmit = async (e) => {
+            e.preventDefault();
+            await addDoc(collection(db, "announcements"), {
+                teacherId: document.getElementById('noteTeacher').value,
+                message: document.getElementById('noteText').value,
+                date: new Date().toLocaleString()
+            });
+            alert("Announcement Sent."); e.target.reset();
         };
 
         onAuthStateChanged(auth, u => { if(u) refreshAll(); else window.location.href="login.html"; });
-
     </script>
 </body>
 </html>
