@@ -3,104 +3,134 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>SuperAdmin Dashboard | SVLS</title>
+    <title>SuperAdmin Command | SVLS</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        .sidebar-link.active { background-color: #1e40af; border-right: 4px solid #fbbf24; }
+        .tab-content { display: none; }
+        .tab-content.active { display: block; }
+    </style>
 </head>
-<body class="bg-gray-100 min-h-screen">
+<body class="bg-slate-50 min-h-screen flex">
 
-    <nav class="bg-blue-800 text-white p-4 shadow-lg flex justify-between items-center sticky top-0 z-50">
-        <h1 class="text-xl font-bold tracking-tight">SVLS ADMIN CORE</h1>
-        <div class="flex items-center gap-4">
-            <span id="adminEmail" class="text-sm opacity-80"></span>
-            <button id="logoutBtn" class="bg-red-500 hover:bg-red-600 px-4 py-2 rounded text-sm font-bold transition">Logout</button>
+    <aside class="w-72 bg-blue-900 text-white flex-shrink-0 flex flex-col sticky top-0 h-screen shadow-2xl">
+        <div class="p-6 border-b border-blue-800">
+            <h1 class="text-2xl font-black tracking-tighter italic">SVLS ADMIN</h1>
+            <p id="adminEmail" class="text-xs text-blue-300 mt-1 truncate"></p>
         </div>
-    </nav>
 
-    <div class="p-6 max-w-7xl mx-auto space-y-8">
+        <nav class="flex-1 mt-6 space-y-1">
+            <button onclick="showTab('approvals')" class="sidebar-link active w-full flex items-center gap-4 px-6 py-4 transition-all hover:bg-blue-800">
+                <i class="fas fa-user-check w-5"></i> <span class="font-bold text-sm uppercase tracking-wider">Approvals</span>
+            </button>
+            <button onclick="showTab('structure')" class="sidebar-link w-full flex items-center gap-4 px-6 py-4 transition-all hover:bg-blue-800">
+                <i class="fas fa-sitemap w-5"></i> <span class="font-bold text-sm uppercase tracking-wider">Academic Setup</span>
+            </button>
+            <button onclick="showTab('assignments')" class="sidebar-link w-full flex items-center gap-4 px-6 py-4 transition-all hover:bg-blue-800">
+                <i class="fas fa-link w-5"></i> <span class="font-bold text-sm uppercase tracking-wider">Class Assignments</span>
+            </button>
+            <button onclick="showTab('announcements')" class="sidebar-link w-full flex items-center gap-4 px-6 py-4 transition-all hover:bg-blue-800">
+                <i class="fas fa-bullhorn w-5"></i> <span class="font-bold text-sm uppercase tracking-wider">Notes to Teachers</span>
+            </button>
+        </nav>
 
-        <section class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
-            <div class="bg-gray-50 p-4 border-b">
-                <h2 class="text-lg font-bold text-gray-800">Pending Student Approvals</h2>
+        <div class="p-6">
+            <button id="logoutBtn" class="w-full bg-red-500 hover:bg-red-600 py-3 rounded-xl font-black text-xs uppercase transition-all shadow-lg">
+                <i class="fas fa-power-off mr-2"></i> Logout
+            </button>
+        </div>
+    </aside>
+
+    <main class="flex-1 overflow-y-auto">
+        <header class="bg-white border-b p-6 flex justify-between items-center sticky top-0 z-10">
+            <h2 id="tabTitle" class="text-xl font-black text-slate-800 uppercase tracking-tighter">Approvals</h2>
+            <div class="flex gap-4">
+                <button onclick="refreshData()" class="text-slate-400 hover:text-blue-600"><i class="fas fa-sync-alt"></i></button>
             </div>
-            <div class="overflow-x-auto">
-                <table class="w-full text-left border-collapse">
-                    <thead>
-                        <tr class="text-xs uppercase bg-gray-100 text-gray-600">
-                            <th class="p-4">Student Email</th>
-                            <th class="p-4">Status</th>
-                            <th class="p-4">Action</th>
-                        </tr>
-                    </thead>
-                    <tbody id="pendingTable" class="divide-y divide-gray-100">
-                        </tbody>
-                </table>
-            </div>
-        </section>
+        </header>
 
-        <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        <div class="p-8 max-w-6xl mx-auto">
             
-            <div class="space-y-6">
-                <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-200">
-                    <h3 class="font-bold text-blue-800 mb-4 border-b pb-2">1. Create Course</h3>
-                    <form id="courseForm" class="space-y-3">
-                        <input type="text" id="courseName" placeholder="Course Name (e.g., BSTI)" class="w-full p-2 border rounded" required>
-                        <input type="number" id="totalYears" placeholder="Duration (Years)" class="w-full p-2 border rounded" required>
-                        <button class="w-full bg-blue-600 text-white py-2 rounded font-bold hover:bg-blue-700">Add Course</button>
-                    </form>
+            <section id="approvals" class="tab-content active space-y-6">
+                <div class="bg-white rounded-2xl shadow-sm border overflow-hidden">
+                    <table class="w-full text-left">
+                        <thead class="bg-slate-50 text-[10px] font-black uppercase text-slate-400 tracking-widest">
+                            <tr><th class="p-4">Email</th><th class="p-4 text-right">Action</th></tr>
+                        </thead>
+                        <tbody id="pendingTable" class="divide-y"></tbody>
+                    </table>
                 </div>
+            </section>
 
-                <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-200">
-                    <h3 class="font-bold text-blue-800 mb-4 border-b pb-2">2. Create Subject</h3>
-                    <form id="subjectForm" class="space-y-3">
-                        <input type="text" id="subjName" placeholder="Subject Name" class="w-full p-2 border rounded" required>
-                        <select id="subjCourse" class="w-full p-2 border rounded" required></select>
-                        <div class="grid grid-cols-2 gap-2">
-                            <input type="number" id="subjYear" placeholder="Year" class="w-full p-2 border rounded" required>
-                            <input type="number" id="subjSem" placeholder="Sem" class="w-full p-2 border rounded" required>
-                        </div>
-                        <button class="w-full bg-blue-600 text-white py-2 rounded font-bold hover:bg-blue-700">Add Subject</button>
-                    </form>
+            <section id="structure" class="tab-content space-y-8">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+                    <div class="bg-white p-8 rounded-2xl shadow-sm border">
+                        <h3 class="font-black text-blue-900 mb-6 uppercase text-sm italic underline decoration-blue-500 underline-offset-8">Course Management</h3>
+                        <form id="courseForm" class="space-y-4">
+                            <input type="text" id="courseName" placeholder="Course Code (BSTI)" class="w-full p-3 bg-slate-50 border-none rounded-xl outline-blue-500" required>
+                            <input type="number" id="totalYears" placeholder="Duration Years" class="w-full p-3 bg-slate-50 border-none rounded-xl outline-blue-500" required>
+                            <button class="w-full bg-blue-600 text-white py-4 rounded-xl font-bold shadow-lg shadow-blue-100 hover:bg-blue-700">Initialize Course</button>
+                        </form>
+                    </div>
+
+                    <div class="bg-white p-8 rounded-2xl shadow-sm border">
+                        <h3 class="font-black text-blue-900 mb-6 uppercase text-sm italic underline decoration-blue-500 underline-offset-8">Subject Registration</h3>
+                        <form id="subjectForm" class="space-y-4">
+                            <input type="text" id="subjName" placeholder="Subject Name" class="w-full p-3 bg-slate-50 border-none rounded-xl outline-blue-500" required>
+                            <select id="subjCourse" class="w-full p-3 bg-slate-50 rounded-xl outline-blue-500 border-none"></select>
+                            <div class="grid grid-cols-2 gap-4">
+                                <input type="number" id="subjYear" placeholder="Year" class="p-3 bg-slate-50 rounded-xl border-none outline-blue-500">
+                                <input type="number" id="subjSem" placeholder="Sem" class="p-3 bg-slate-50 rounded-xl border-none outline-blue-500">
+                            </div>
+                            <button class="w-full bg-blue-600 text-white py-4 rounded-xl font-bold shadow-lg shadow-blue-100 hover:bg-blue-700">Add Subject</button>
+                        </form>
+                    </div>
                 </div>
-            </div>
+            </section>
 
-            <div class="lg:col-span-2 bg-white p-6 rounded-xl shadow-sm border border-gray-200">
-                <h3 class="font-bold text-blue-800 mb-4 border-b pb-2">3. Create Class (Assign Teacher to Subject)</h3>
-                <p class="text-xs text-gray-500 mb-4">A "Class" connects a subject, a teacher, and a school year.</p>
-                <form id="classForm" class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div>
-                        <label class="block text-xs font-bold text-gray-600">Select Subject</label>
-                        <select id="classSubject" class="w-full p-2 border rounded" required></select>
-                    </div>
-                    <div>
-                        <label class="block text-xs font-bold text-gray-600">Select Teacher</label>
-                        <select id="classTeacher" class="w-full p-2 border rounded" required></select>
-                    </div>
-                    <div>
-                        <label class="block text-xs font-bold text-gray-600">School Year</label>
-                        <input type="text" id="classYear" placeholder="2025-2026" class="w-full p-2 border rounded" required>
-                    </div>
-                    <div>
-                        <label class="block text-xs font-bold text-gray-600">Semester</label>
-                        <select id="classSem" class="w-full p-2 border rounded">
-                            <option value="1">1st Semester</option>
-                            <option value="2">2nd Semester</option>
+            <section id="assignments" class="tab-content space-y-8">
+                <div class="bg-white p-8 rounded-2xl shadow-sm border border-blue-100">
+                    <h3 class="font-black text-blue-900 mb-6 text-sm uppercase italic">Assign Teacher to Subject</h3>
+                    <form id="classForm" class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <select id="classSubject" class="p-3 bg-slate-50 rounded-xl outline-blue-500 border-none" required></select>
+                        <select id="classTeacher" class="p-3 bg-slate-50 rounded-xl outline-blue-500 border-none" required></select>
+                        <input type="text" id="classYear" placeholder="SY (e.g., 2025-2026)" class="p-3 bg-slate-50 rounded-xl outline-blue-500 border-none" required>
+                        <select id="classSem" class="p-3 bg-slate-50 rounded-xl outline-blue-500 border-none">
+                            <option value="1">1st Semester</option><option value="2">2nd Semester</option>
                         </select>
-                    </div>
-                    <div class="md:col-span-2">
-                        <button class="w-full bg-green-600 text-white py-3 rounded font-bold hover:bg-green-700 transition">Open Class</button>
-                    </div>
-                </form>
-            </div>
+                        <button class="md:col-span-2 bg-emerald-600 text-white py-4 rounded-xl font-black shadow-lg shadow-emerald-100 hover:bg-emerald-700 transition-all">Create Class Record</button>
+                    </form>
+                </div>
+
+                <div class="bg-white rounded-2xl shadow-sm border overflow-hidden">
+                    <div class="p-4 bg-slate-50 border-b"><h4 class="font-black text-xs uppercase opacity-40">Live Class Records</h4></div>
+                    <table class="w-full text-left text-sm">
+                        <tbody id="masterClassTable" class="divide-y"></tbody>
+                    </table>
+                </div>
+            </section>
+
+            <section id="announcements" class="tab-content space-y-8">
+                <div class="bg-white p-8 rounded-2xl shadow-sm border">
+                    <h3 class="font-black text-blue-900 mb-6 text-sm uppercase italic underline underline-offset-8 decoration-yellow-400">Leave Note to Teacher</h3>
+                    <form id="noteForm" class="space-y-4">
+                        <select id="noteTeacher" class="w-full p-3 bg-slate-50 rounded-xl border-none outline-yellow-500" required></select>
+                        <textarea id="noteText" placeholder="Write your message here..." class="w-full p-4 bg-slate-50 rounded-xl border-none outline-yellow-500 h-32"></textarea>
+                        <button class="w-full bg-yellow-500 text-slate-900 py-4 rounded-xl font-black shadow-lg hover:bg-yellow-600 transition-all uppercase text-xs tracking-widest">Send Note</button>
+                    </form>
+                </div>
+            </section>
 
         </div>
-    </div>
+    </main>
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
         import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
-        import { getFirestore, collection, query, where, getDocs, doc, updateDoc, addDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+        import { getFirestore, collection, query, where, getDocs, doc, updateDoc, setDoc, addDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
-const firebaseConfig = {
+        const firebaseConfig = {
   apiKey: "AIzaSyBK-v8xtt7x0AA_btC0oE88IolgU9m5Q3E",
   authDomain: "cmcsvls.firebaseapp.com",
   projectId: "cmcsvls",
@@ -109,93 +139,132 @@ const firebaseConfig = {
   appId: "1:973791112453:web:728b9ac51c0f3f89955b6c",
   measurementId: "G-7KEY33ZZHE"
 };
-
         const app = initializeApp(firebaseConfig);
         const auth = getAuth(app);
         const db = getFirestore(app);
 
-        // Security Check
-        onAuthStateChanged(auth, async (user) => {
-            if (!user) window.location.href = "login.html";
-            else document.getElementById('adminEmail').innerText = user.email;
-        });
+        // TAB NAVIGATION LOGIC
+        window.showTab = (tab) => {
+            document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+            document.querySelectorAll('.sidebar-link').forEach(l => l.classList.remove('active'));
+            document.getElementById(tab).classList.add('active');
+            event.currentTarget.classList.add('active');
+            document.getElementById('tabTitle').innerText = tab.replace(/([A-Z])/g, ' $1');
+            refreshData();
+        };
 
-        // 1. STUDENT APPROVAL LOGIC
+        // REFRESH DATA DISPATCHER
+        window.refreshData = () => {
+            loadPendingStudents();
+            loadDropdowns();
+            loadMasterRecords();
+        };
+
+        onAuthStateChanged(auth, u => { if(!u) window.location.href="login.html"; else document.getElementById('adminEmail').innerText = u.email; });
+
+        // 1. STUDENT APPROVALS
         async function loadPendingStudents() {
             const table = document.getElementById('pendingTable');
             table.innerHTML = "";
             const q = query(collection(db, "users"), where("active", "==", false), where("role", "==", "student"));
             const snapshot = await getDocs(q);
             snapshot.forEach(d => {
-                const data = d.data();
-                table.innerHTML += `
-                    <tr>
-                        <td class="p-4">${data.email}</td>
-                        <td class="p-4"><span class="bg-yellow-100 text-yellow-800 px-2 py-1 rounded text-xs">Pending</span></td>
-                        <td class="p-4"><button onclick="approveStudent('${d.id}')" class="text-blue-600 font-bold hover:underline">Approve</button></td>
-                    </tr>`;
+                table.innerHTML += `<tr><td class="p-4 font-bold text-slate-700">${d.data().email}</td><td class="p-4 text-right"><button onclick="approveStudent('${d.id}')" class="bg-blue-50 text-blue-700 px-4 py-1 rounded-full font-bold text-xs hover:bg-blue-600 hover:text-white transition-all">APPROVE</button></td></tr>`;
             });
         }
-        window.approveStudent = async (id) => {
-            await updateDoc(doc(db, "users", id), { active: true });
-            alert("Student Approved!"); loadPendingStudents();
-        };
+        window.approveStudent = async (id) => { await updateDoc(doc(db, "users", id), { active: true }); refreshData(); };
 
-        // 2. DATA LOADING (Dropdowns)
+        // 2. DROPDOWNS
         async function loadDropdowns() {
-            const coursesSnap = await getDocs(collection(db, "courses"));
+            const courses = await getDocs(collection(db, "courses"));
             const subCourse = document.getElementById('subjCourse');
-            subCourse.innerHTML = "";
-            coursesSnap.forEach(d => subCourse.innerHTML += `<option value="${d.id}">${d.data().name}</option>`);
+            subCourse.innerHTML = `<option value="">Select Target Course</option>`;
+            courses.forEach(d => subCourse.innerHTML += `<option value="${d.id}">${d.data().name}</option>`);
 
-            const subjectsSnap = await getDocs(collection(db, "subjects"));
+            const subjects = await getDocs(collection(db, "subjects"));
             const classSub = document.getElementById('classSubject');
-            classSub.innerHTML = "";
-            subjectsSnap.forEach(d => classSub.innerHTML += `<option value="${d.id}">${d.data().name}</option>`);
+            classSub.innerHTML = `<option value="">Select Subject to Assign</option>`;
+            subjects.forEach(d => classSub.innerHTML += `<option value="${d.id}">${d.data().name}</option>`);
 
-            const teachersSnap = await getDocs(collection(db, "teachers"));
+            const teachers = await getDocs(collection(db, "teachers"));
             const classTeach = document.getElementById('classTeacher');
-            classTeach.innerHTML = "";
-            teachersSnap.forEach(d => classTeach.innerHTML += `<option value="${d.id}">${d.data().name}</option>`);
+            const noteTeach = document.getElementById('noteTeacher');
+            classTeach.innerHTML = `<option value="">Select Assignee (Teacher)</option>`;
+            noteTeach.innerHTML = `<option value="">Global/Specific Teacher</option>`;
+            teachers.forEach(d => {
+                const opt = `<option value="${d.id}">${d.data().name}</option>`;
+                classTeach.innerHTML += opt;
+                noteTeach.innerHTML += opt;
+            });
         }
 
-        // 3. FORM HANDLERS
+        // 3. MASTER RECORDS
+        async function loadMasterRecords() {
+            const table = document.getElementById('masterClassTable');
+            table.innerHTML = "";
+            const snap = await getDocs(collection(db, "classes"));
+            snap.forEach(async d => {
+                const sub = await getDoc(doc(db, "subjects", d.data().subjectId));
+                const tea = await getDoc(doc(db, "teachers", d.data().teacherId));
+                table.innerHTML += `<tr>
+                    <td class="p-4"><b>${sub.exists() ? sub.data().name : '...'}</b></td>
+                    <td class="p-4 text-slate-400">Assigned to: <span class="text-blue-600 font-bold">${tea.exists() ? tea.data().name : '...'}</span></td>
+                    <td class="p-4 text-xs font-black uppercase text-slate-300 tracking-tighter">${d.data().schoolYear} | Sem ${d.data().semester}</td>
+                </tr>`;
+            });
+        }
+
+        // 4. FORM LOGIC WITH DUP PREVENTION
         document.getElementById('courseForm').onsubmit = async (e) => {
             e.preventDefault();
-            await addDoc(collection(db, "courses"), {
-                name: document.getElementById('courseName').value,
-                totalYears: document.getElementById('totalYears').value
-            });
-            alert("Course Added"); loadDropdowns();
+            await addDoc(collection(db, "courses"), { name: document.getElementById('courseName').value, totalYears: document.getElementById('totalYears').value });
+            alert("Course Setup Complete"); refreshData();
         };
 
         document.getElementById('subjectForm').onsubmit = async (e) => {
             e.preventDefault();
-            await addDoc(collection(db, "subjects"), {
-                name: document.getElementById('subjName').value,
-                courseId: document.getElementById('subjCourse').value,
-                yearLevel: document.getElementById('subjYear').value,
-                semester: document.getElementById('subjSem').value
-            });
-            alert("Subject Added"); loadDropdowns();
+            await addDoc(collection(db, "subjects"), { name: document.getElementById('subjName').value, courseId: document.getElementById('subjCourse').value, yearLevel: document.getElementById('subjYear').value, semester: document.getElementById('subjSem').value });
+            alert("Subject Profiled"); refreshData();
         };
 
         document.getElementById('classForm').onsubmit = async (e) => {
             e.preventDefault();
-            await addDoc(collection(db, "classes"), {
-                subjectId: document.getElementById('classSubject').value,
-                teacherId: document.getElementById('classTeacher').value,
-                schoolYear: document.getElementById('classYear').value,
-                semester: document.getElementById('classSem').value
-            });
-            alert("Class Opened & Teacher Assigned!");
+            const sid = document.getElementById('classSubject').value;
+            const tid = document.getElementById('classTeacher').value;
+            const sy = document.getElementById('classYear').value;
+            const sem = document.getElementById('classSem').value;
+
+            // PREVENT DUPLICATION: Create a unique Class Key
+            const classKey = `${sid}_${tid}_${sy}_${sem}`.replace(/\s+/g, '');
+            
+            // Check if exists
+            const existing = await getDoc(doc(db, "classes", classKey));
+            if(existing.exists()){
+                alert("❌ Record Duplicate! This teacher is already assigned to this subject for this specific SY/Sem.");
+                return;
+            }
+
+            await setDoc(doc(db, "classes", classKey), { subjectId: sid, teacherId: tid, schoolYear: sy, semester: sem });
+            alert("✅ Class Record Created Successfully!");
+            refreshData();
         };
 
-        document.getElementById('logoutBtn').onclick = () => signOut(auth);
+        // 5. ANNOUNCEMENTS / NOTES
+        document.getElementById('noteForm').onsubmit = async (e) => {
+            e.preventDefault();
+            await addDoc(collection(db, "announcements"), {
+                teacherId: document.getElementById('noteTeacher').value,
+                message: document.getElementById('noteText').value,
+                date: new Date().toISOString(),
+                from: "SuperAdmin"
+            });
+            alert("Message Dispatch Successful");
+            document.getElementById('noteForm').reset();
+        };
 
-        // Run on load
-        loadPendingStudents();
-        loadDropdowns();
+        document.getElementById('logoutBtn').onclick = () => signOut(auth).then(()=>window.location.href="login.html");
+        
+        refreshData();
     </script>
 </body>
 </html>
